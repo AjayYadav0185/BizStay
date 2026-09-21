@@ -1,37 +1,69 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
 use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 
-enum PaymentStatus: string implements HasLabel, HasColor, HasIcon
+enum PaymentStatus: string implements HasColor, HasIcon, HasLabel
 {
-    case Paid = 'paid';
     case Pending = 'pending';
-    case Overdue = 'overdue';
+    case Success = 'success';
+    case Failed = 'failed';
+    case Refunded = 'refunded';
 
-    public function getLabel(): ?string
+    public function getLabel(): string
     {
-        return ucfirst($this->value);
+        return match ($this) {
+            self::Pending => 'Pending',
+            self::Success => 'Success',
+            self::Failed => 'Failed',
+            self::Refunded => 'Refunded',
+        };
     }
 
     public function getColor(): string|array|null
     {
         return match ($this) {
-            self::Paid => 'success',
             self::Pending => 'warning',
-            self::Overdue => 'danger',
+            self::Success => 'success',
+            self::Failed => 'danger',
+            self::Refunded => 'gray',
         };
     }
 
     public function getIcon(): ?string
     {
         return match ($this) {
-            self::Paid => 'heroicon-o-check-circle',
             self::Pending => 'heroicon-o-clock',
-            self::Overdue => 'heroicon-o-exclamation-triangle',
+            self::Success => 'heroicon-o-check-badge',
+            self::Failed => 'heroicon-o-x-circle',
+            self::Refunded => 'heroicon-o-arrow-uturn-left',
         };
+    }
+
+    /**
+     * Only settled money reduces an invoice balance.
+     */
+    public function settlesInvoice(): bool
+    {
+        return $this === self::Success;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function options(): array
+    {
+        $options = [];
+
+        foreach (self::cases() as $case) {
+            $options[$case->value] = $case->getLabel();
+        }
+
+        return $options;
     }
 }

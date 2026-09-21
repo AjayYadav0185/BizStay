@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\RoomResource\Pages;
 
 use App\Filament\Resources\RoomResource;
@@ -10,10 +12,12 @@ class ListRooms extends ListRecords
 {
     protected static string $resource = RoomResource::class;
 
+    protected static ?string $title = 'Room & Bed Grid';
+
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()->label('Add room'),
         ];
     }
 }

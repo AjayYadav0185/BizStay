@@ -1,12 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use App\Enums\BedStatus;
+use App\Enums\MeterType;
 use App\Enums\PropertyType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * The single PG building. Exactly one active row is expected; all billing
+ * settings live here so the money engine has a single source of truth.
+ *
+ * @property int $id
+ * @property string $name
+ * @property string $code
+ * @property PropertyType $type
+ * @property string $address
+ * @property int $total_floors
+ * @property int $security_deposit_months
+ * @property int $notice_period_days
+ * @property int $billing_cycle_start_day
+ * @property string $electricity_rate_per_unit
+ * @property string $water_rate_per_unit
+ * @property string $meal_charge_per_day
+ * @property string $maintenance_charge_per_bed
+ * @property string $late_fee_percent
+ */
 class Property extends Model
 {
     /** @use HasFactory<\Database\Factories\PropertyFactory> */
@@ -14,74 +36,84 @@ class Property extends Model
 
     protected $fillable = [
         'name', 'code', 'type', 'address', 'locality', 'city', 'state', 'pincode',
-        'manager_name', 'contact_phone', 'total_floors', 'amenities',
-        'security_deposit_months', 'notice_period_days', 'is_active', 'notes',
+        'manager_name', 'contact_phone', 'contact_email', 'total_floors', 'amenities',
+        'security_deposit_months', 'notice_period_days', 'billing_cycle_start_day',
+        'electricity_rate_per_unit', 'water_rate_per_unit', 'meal_charge_per_day',
+        'maintenance_charge_per_bed', 'late_fee_percent', 'is_active', 'notes',
     ];
 
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
             'type' => PropertyType::class,
             'amenities' => 'array',
             'is_active' => 'boolean',
+            'total_floors' => 'integer',
+            'security_deposit_months' => 'integer',
+            'notice_period_days' => 'integer',
+            'billing_cycle_start_day' => 'integer',
+            'electricity_rate_per_unit' => 'decimal:2',
+            'water_rate_per_unit' => 'decimal:2',
+            'meal_charge_per_day' => 'decimal:2',
+            'maintenance_charge_per_bed' => 'decimal:2',
+            'late_fee_percent' => 'decimal:2',
         ];
     }
 
-    public function rooms(): HasMany
+    /**
+     * The building profile. Deliberately not memoised in a static so that
+     * RefreshDatabase style tests never see a stale row.
+     */
+    public static function current(): ?self
     {
-        return $this->hasMany(Room::class);
+        return static::query()->where('is_active', true)->orderBy('id')->first()
+            ?? static::query()->orderBy('id')->first();
     }
 
-    public function beds()
+    /**
+     * Single-property mode: inventory is queried directly instead of through a
+     * property_id foreign key. Rooms/beds stay property-agnostic so the domain
+     * can later become multi-property with one additive migration.
+     */
+    public function bedCount(): int
     {
-        return $this->hasManyThrough(Bed::class, Room::class);
+        return Bed::query()->count();
     }
 
-    public function tenants(): HasMany
+    public function occupiedBedCount(): int
     {
-        return $this->hasMany(Tenant::class);
+        return Bed::query()->where('status', BedStatus::Occupied->value)->count();
     }
 
-    public function payments(): HasMany
+    public function occupancyPercent(): float
     {
-        return $this->hasMany(Payment::class);
+        $total = $this->bedCount();
+
+        return $total === 0
+            ? 0.0
+            : round($this->occupiedBedCount() / $total * 100, 1);
     }
 
-    public function expenses(): HasMany
+    /**
+     * Applies the configured tariff for a utility, used when a meter does not
+     * carry its own override rate.
+     */
+    public function rateFor(MeterType $meterType): float
     {
-        return $this->hasMany(Expense::class);
-    }
-
-    public function complaints(): HasMany
-    {
-        return $this->hasMany(Complaint::class);
-    }
-
-    public function bookings(): HasMany
-    {
-        return $this->hasMany(Booking::class);
-    }
-
-    public function activeTenants(): HasMany
-    {
-        return $this->hasMany(Tenant::class)->whereIn('status', ['active', 'notice_period']);
+        return (float) $this->{$meterType->getSettingKey()};
     }
 
     public function getFullAddressAttribute(): string
     {
-        return trim($this->address.', '.$this->locality.', '.$this->city.', '.$this->state.' '.$this->pincode, ' ,');
-    }
-
-    public function getOccupancyPercentAttribute(): float
-    {
-        $total = $this->beds()->count();
-
-        if ($total === 0) {
-            return 0.0;
-        }
-
-        $occupied = $this->beds()->where('status', 'occupied')->count();
-
-        return round($occupied / $total * 100, 1);
+        return trim(implode(', ', array_filter([
+            $this->address,
+            $this->locality,
+            $this->city,
+            $this->state,
+            $this->pincode,
+        ])), ' ,');
     }
 }

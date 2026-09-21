@@ -3,10 +3,10 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Dashboard;
-use App\Filament\Widgets\OccupancyChart;
-use App\Filament\Widgets\OpenComplaints;
-use App\Filament\Widgets\PendingPayments;
-use App\Filament\Widgets\StatsOverview;
+use App\Filament\Widgets\DueInvoicesTable;
+use App\Filament\Widgets\OccupancyByFloorChart;
+use App\Filament\Widgets\OccupancyOverview;
+use App\Filament\Widgets\StayMovementsTable;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -30,13 +30,13 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('BizStay')
+            ->brandName('BizStay PG')
             ->colors([
                 'primary' => Color::Amber,
             ])
             ->navigationGroups([
-                'Properties',
-                'People',
+                'Property',
+                'Guests',
                 'Finance',
                 'Operations',
             ])
@@ -47,10 +47,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                StatsOverview::class,
-                PendingPayments::class,
-                OpenComplaints::class,
-                OccupancyChart::class,
+                OccupancyOverview::class,
+                StayMovementsTable::class,
+                DueInvoicesTable::class,
+                OccupancyByFloorChart::class,
             ])
             ->sidebarCollapsibleOnDesktop()
             ->middleware([
