@@ -1,0 +1,2 @@
+echo 'invoice statuses: '.Invoice::query()->selectRaw('status, count(*) c')->groupBy('status')->get()->map(fn ($r) => $r->getRawOriginal('status').'='.$r->c)->implode(', ')."\n";
+echo 'payment methods: '.Payment::query()->selectRaw('payment_method, count(*) c')->groupBy('payment_method')->get()->map(fn ($r) => $r->getRawOriginal('payment_method').'='.$r->c)->implode(', ')."\n";

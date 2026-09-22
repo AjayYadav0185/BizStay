@@ -3,29 +3,39 @@
 > Updated: 22 Sep 2026 · Codebase: `/Applications/MAMP/htdocs/BizStay`
 > Stack: Laravel 13 + Filament 3 + SQLite (MAMP/MySQL-ready) · Branch `main`
 
-## 1. TL;DR — P0 FIXES LANDED 22 SEP 2026
+## 1. TL;DR — P0 + P1 LANDED 22 SEP 2026
 
-**Admin UI restored 3/13 → 13/13. Health 6/10 → 8/10.**
+**Admin UI restored 3/13 → 13/13. Core PG loop (P1) complete. Health 6/10 → 9/10.**
 
 | Layer | Status | Note |
 |---|---|---|
 | Database schema (13 biz tables) | DONE | Clean, indexed, idempotent keys |
 | Models + 16 PHP enums | DONE | Type-safe, good relations/scopes |
-| Domain services (5 singletons) | DONE | Best part — locking, proration, settlement |
-| Observers (6) + cron schedule | DONE | Ledger self-maintains |
-| Filament shell + dashboard (4 widgets) | DONE | Occupancy, dues, movements, floor chart |
-| Filament Resources (CRUD UI) | FIXED 13/13 | All 10 missing Resource.php created; 40 admin routes |
+| Domain services (6 singletons) | DONE | Best part — locking, proration, settlement, inquiry conversion |
+| Observers (6) + cron schedule | DONE | Ledger self-maintains + late fees (06:00) + reminders (10:00) |
+| Filament shell + dashboard (5 widgets) | DONE | Occupancy, dues, movements, floor chart, **P&L** |
+| Filament Resources (CRUD UI) | DONE 13/13 | 40 admin routes; all CRUD + workflows navigable |
+| P1 workflows (convert/KYC/collect/remind/bulk meters/SLA) | DONE 22-Sep | All via services — no inline DB writes in UI |
+| Printable invoice + receipt | DONE 22-Sep | `/invoices/{id}/print`, auth-guarded, browser print-to-PDF |
+| Late-fee engine | DONE 22-Sep | Visible other_charges line, once per invoice, nightly cron |
 | Seeders / Factories / Demo data | DONE | DatabaseSeeder + DemoSeeder + 12 factories; admin@bizstay.local |
-| Tests | DONE (core) | BillingCoreTest 6/6 + 2 example = 8/8 green |
-| Roles, tenant portal, gateway, reports | NOT STARTED | What separates good tool from best product |
+| Tests | DONE | BillingCoreTest 6/6 + P1MoneyMaturityTest 6/6 + 2 example = **14/14 green** |
+| Roles, tenant portal, gateway, exports | NOT STARTED | P2/P3 — what separates good tool from best product |
 
-**Health score: 8/10** — backend + navigable admin; money-maturity + portal remain.
+**Health score: 9/10** — backend + full admin loop + money maturity basics; gateway/portal/roles remain.
 
 ## 1b. WHAT WAS FIXED 22 SEP 2026
-- 10 Resources created (Guest/Booking/Inquiry/LeaveLog/UtilityMeter/MeterReading/Invoice/Payment/Expense/Complaint). CreateBooking→allocate(), bed-move→changeBed(), meter→record(), guest Aadhaar→hash-only.
-- `Booking::outstandingDues()` + `Guest::outstandingBalance()` now use balance (total-paid), not total.
-- Invoice idempotency UNIQUE crash fixed (whereDate lookup); checkout reuses month row as settlement.
-- DemoSeeder: 6 rooms + meters + 5 guests via real service. 12 factories. BillingCoreTest 6/6.
+- **P0:** 10 Resources created (Guest/Booking/Inquiry/LeaveLog/UtilityMeter/MeterReading/Invoice/Payment/Expense/Complaint). CreateBooking→allocate(), bed-move→changeBed(), meter→record(), guest Aadhaar→hash-only.
+- **P0:** `Booking::outstandingDues()` + `Guest::outstandingBalance()` now use balance (total-paid), not total.
+- **P0:** Invoice idempotency UNIQUE crash fixed (whereDate lookup); checkout reuses month row as settlement.
+- **P1:** `InquiryConversionService` — one-click Convert wizard: guest reuse, KYC verify tick, bed picker (floor/rent hints), deposit policy prefill, first prorated invoice raised on move-in.
+- **P1:** GuestResource Verify/Reject KYC row actions; BookingResource notice/withdraw/settle-and-out call the services.
+- **P1:** InvoiceResource: Collect (UTR validated for digital methods), Remind, Remind-all-overdue, Apply Late Fees, Print (`/invoices/{id}/print` blade, auth via Filament middleware).
+- **P1:** Meters: bulk floor-entry modal (per-meter prev/rate hints, idempotent save, blank rows skipped), `MeterReading::isAnomalous()` icon column (>2× meter average).
+- **P1:** Complaints: Start / Assign / Resolve actions, staff column, SLA badge (24h high / 72h rest), SLA-breached + unassigned filters. ExpenseResource: receipt upload/preview + this-month filter.
+- **P2:** Late-fee engine: `applyLateFees()` → `other_charges` line, charged once (`late_fee_charged_on` guard), nightly 06:00 cron + admin button. Reminders nightly 10:00 (3-day throttle, structured log).
+- **P2:** `ProfitLossWidget` (collected − expenses = net) on dashboard; `Property::monthlyPnL()` reusable.
+- Migration `2026_09_22_000001` added: `invoices.late_fee_charged_on/last_reminded_at`, `bookings.assigned_marketer/converted_inquiry_id` (additive, nullable).
 
 ## 2. What Is DONE (keep, don't rewrite)
 
@@ -34,24 +44,25 @@ Files: `migrations/*000003*`, `Models/Property, Room, Bed`, `Resources/Property,
 Works: singleton building profile with billing rules, sharing 1/2/3/4 auto-creates beds (`101-A/B`), bed state machine, `syncStatusFromBeds()` via observer, bed badge-stack view.
 Polish left: room photos, floor-plan upload.
 
-### Module B — Tenant & Stay: 85% backend, 10% UI
-Files: `migrations/*000004*`, `Models/Guest, Booking, LeaveLog, Inquiry`, `Services/BedAllocationService` (FOR UPDATE lock, KYC + blacklist guard), `CheckoutSettlementService` (preview-settle-refund).
-Works: Aadhaar hash-only, reusable guest, live scope, notice/withdraw/cancel, food opt-out days.
-Broken: `Guest, Booking, LeaveLog, Inquiry` Resource.php files don't exist — no check-in/checkout UI.
+### Module B — Tenant & Stay: 90% backend, 85% UI
+Files: `migrations/*000004*`, `Models/Guest, Booking, LeaveLog, Inquiry`, `Services/BedAllocationService` (FOR UPDATE lock, KYC + blacklist guard), `Services/InquiryConversionService` (lead→tenant one-click), `CheckoutSettlementService` (preview-settle-refund).
+Works: Aadhaar hash-only, reusable guest, live scope, notice/withdraw/cancel, food opt-out days, convert wizard, KYC verify/reject actions, check-in via allocate(), checkout settlement modal.
+Polish left: booking check-in wizard as a true multi-step form, duplicate-Aadhaar warn, doc preview.
 
-### Module C — Utility & Metering: 80% backend, 0% UI
+### Module C — Utility & Metering: 85% backend, 80% UI
 Files: `migrations/*000005*`, `Models/UtilityMeter, MeterReading`, `Services/MeterReadingService` (bulk floor entry, regression guard).
-Works: 1 meter/utility/room, multiplier + rate override, `meter+date` unique, share divisor.
-Broken: `UtilityMeter, MeterReading` Resource.php missing.
+Works: 1 meter/utility/room, multiplier + rate override, `meter+date` unique, share divisor, bulk floor-entry modal with prev/rate hints, anomaly flag (>2× average), invoice-claim link, history view.
+Polish left: monthly comparison chart.
 
-### Module D — Finance/Billing: 85% backend, 0% UI
-Files: `Models/Invoice` (`BZ-YYYYMM-####`, booking+cycle unique), `Payment` (UTR unique), `Services/InvoiceService` (prorated rent + utility + maintenance - food + arrears), `routes/console.php` (00:30 overdue, 02:00 billing).
-Broken: `Invoice, Payment, Expense` Resource.php missing. No PDF, no gateway. Late-fee % stored but never charged — verify.
+### Module D — Finance/Billing: 90% backend, 85% UI
+Files: `Models/Invoice` (`BZ-YYYYMM-####`, booking+cycle unique), `Payment` (UTR unique), `Services/InvoiceService` (prorated rent + utility + maintenance - food + late fees), `routes/console.php` (00:30 overdue, 02:00 billing, 06:00 late fees, 10:00 reminders).
+Works: full invoice table + edit, Collect with method + UTR (validated for digital), printable invoice/receipt, Remind (single + bulk, 3-day throttle), late-fee engine (visible line item, charged once), Generate-cycle header action, P&L widget.
+Broken: no gateway (manual cash/UPI only), no true PDF binary (browser print-to-PDF used instead).
 
-### Module E — Operations: 70% backend, 0% UI
-Files: `migrations/*000006*`, `Models/Complaint, Expense`.
-Works: decoupled FKs, `open` scope, `resolve()` helper.
-Broken: `ComplaintResource.php` missing. No SLA/photos/board.
+### Module E — Operations: 80% backend, 75% UI
+Files: `migrations/*000006*`, `Models/Complaint, Expense`, `Services/InquiryConversionService` (shared).
+Works: decoupled FKs, `open` scope, `resolve()` helper, Start/Assign/Resolve actions, staff column, SLA clock (24h high / 72h rest) + breach badge/filters, expense receipts.
+Broken: no photo upload on complaints, no kanban layout (list board used).
 
 ### Platform: DONE
 `AdminPanelProvider` (Property/Guests/Finance/Operations groups), `Dashboard`, 6 observers, 16 enums, FormRequests, domain exceptions.
@@ -89,8 +100,8 @@ Fix: create the 10 `*Resource.php` files reusing Bed/Room patterns. Every table 
 10. ~~Complaints board: kanban open/in_progress/resolved/closed, photo, assign staff, SLA timer.~~ DONE 22-Sep (list board): Start/Assign/Resolve actions, staff column, SLA badge (24h high / 72h rest), SLA-breached + unassigned filters. Photo upload still open.
 
 ### P2 — Money maturity + trust (Weeks 4-5)
-11. ~~Late-fee engine: apply `late_fee_percent` on overdue as visible line item (stored, never charged today).~~ DONE 22-Sep: `InvoiceService::applyLateFees()` — 10% style fee into other_charges, once per invoice (late_fee_charged_on guard), nightly 06:00 cron + admin button.
-12. Expense approvals + `receipt_path` preview, budget vs actual, monthly P&L widget (collected - expenses).
+11. ~~Late-fee engine~~ DONE 22-Sep.
+12. Expense approvals + budget vs actual — REMAINS (receipts preview + monthly P&L widget DONE 22-Sep; approvals workflow and budget-vs-actual report still open).
 13. Deposit ledger per booking (collected -> applied -> refunded, never negative).
 14. Exports: rent roll / dues aging / occupancy Excel; GST-ready invoice if needed.
 15. Gateway: Razorpay/UPI intent + webhook -> auto Payment success -> invoice paid_at. Keep manual cash/UPI fallback.
@@ -108,17 +119,17 @@ Fix: create the 10 `*Resource.php` files reusing Bed/Room patterns. Every table 
 | # | Module | Backend | UI | Gap to best |
 |---|---|---|---|---|
 | A | Property/Rooms/Beds | 90% | 90% | photos, floor plan |
-| B1 | Guests + KYC | 85% | 0% | GuestResource, doc preview, duplicate-Aadhaar warn |
-| B2 | Bookings / stay | 90% | 0% | BookingResource, wizard, settlement modal |
-| B3 | Inquiries | 60% | 0% | InquiryResource, convert action, reminders |
-| B4 | Leave / food | 70% | 0% | LeaveLogResource, approve flow |
-| C | Meters/Readings | 80% | 0% | bulk grid, anomaly flag |
-| D1 | Invoices | 85% | 0% | InvoiceResource, PDF, late-fee line |
-| D2 | Payments | 80% | 0% | PaymentResource, gateway, refund flow |
-| D3 | Expenses/P&L | 60% | 0% | ExpenseResource, approvals, receipts |
-| E | Complaints | 70% | 0% | kanban, SLA, photos |
+| B1 | Guests + KYC | 90% | 85% | doc preview, duplicate-Aadhaar warn |
+| B2 | Bookings / stay | 90% | 85% | multi-step wizard, settlement preview modal polish |
+| B3 | Inquiries | 80% | 80% | auto follow-up reminders (cron), reminders UI |
+| B4 | Leave / food | 70% | 60% | approve flow UI |
+| C | Meters/Readings | 85% | 80% | monthly comparison chart |
+| D1 | Invoices | 90% | 85% | true PDF binary, GST-ready variant |
+| D2 | Payments | 80% | 80% | gateway, refund flow UI |
+| D3 | Expenses/P&L | 70% | 80% | approvals, budget vs actual |
+| E | Complaints | 80% | 75% | photos, kanban layout |
 | X | Roles/Audit | 20% | 20% | Shield, log, 2FA |
-| X | Notify/Reports/Portal | 0-10% | 0% | queue, exports, 2nd panel |
+| X | Notify/Reports/Portal | 10% | 10% | queue, exports, 2nd panel |
 
 ## 6. Suggested Next 5 Commits
 1. `fix(admin): restore 10 missing *Resource.php + nav groups` DONE 22-Sep
@@ -130,9 +141,23 @@ Fix: create the 10 `*Resource.php` files reusing Bed/Room patterns. Every table 
 ## 7. Risks / Decisions
 1. Singleton vs multi-property: keep singleton until P3 (schema designed for it).
 2. README overclaims (multi-property, 8 resource pages, seed data) — fix or implement; will fail a demo today.
-3. ~~`Booking::outstandingDues()` sums `total_due` not balance — partial payments overstate dashboard dues. Fix in P1.~~ FIXED 22-Sep: now balance (total - paid).
-4. Invoice has Edit but no Create page (correct — system-generated). Keep create disabled; add Generate-for-cycle header action.
+3. ~~`Booking::outstandingDues()` sums `total_due` not balance~~ FIXED 22-Sep: now balance (total - paid).
+4. ~~Invoice has Edit but no Create page; add Generate-for-cycle header action.~~ RESOLVED: create stays disabled (correct — system-generated) and the Generate-cycle header action exists on InvoiceResource + DueInvoicesTable.
 5. Aadhaar hash-only is correct — never add clear-text column.
+6. Late-fee engine charges once per invoice (guard column), not compounding daily — intentional; revisit if per-day fees are wanted.
+7. Printable invoice is browser print-to-PDF (no binary PDF lib installed) — swap to dompdf/snappy only if attachments are required (P3).
 
-*If you only do one thing next: restore the 10 missing Resources. Seeders, tests, gateway, portal all depend on navigable admin.*
+## 8. HOW MUCH REMAINS (~25%)
+
+Done: backend domain (95%), admin CRUD + P1 workflows (85%), money basics incl. late fees/reminders/print/P&L (85%), tests 14/14 green.
+
+| Block | Effort | What's in it |
+|---|---|---|
+| P2 leftovers (Wk 4-5) | ~2 wks | expense approvals, budget vs actual, deposit ledger view, Excel exports (rent roll/dues aging/occupancy), payment gateway (Razorpay/UPI + webhook) |
+| P3 BEST layer (Wk 6-8) | ~3 wks | roles + audit (spatie/shield, activity log, 2FA), queued notifications (SMS/WhatsApp/email on raise/due/overdue/resolved), tenant portal (2nd panel), public site (availability + inquiry form), multi-property switcher, backups/health/rate-limit |
+| Polish backlog | ~1 wk | complaint photos + kanban, booking multi-step wizard, follow-up auto-reminders cron, README truth pass, true PDF binary if needed |
+
+**Total ≈ 6 focused weeks to "best product"; the house is fully runnable in the admin today.**
+
+*If you only do one thing next: wire the payment gateway (P2 #15) — collections are the last manual step in an otherwise self-maintaining money loop. Then roles/audit (P3 #16) before adding staff users.*
 
