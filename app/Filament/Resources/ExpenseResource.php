@@ -66,7 +66,7 @@ class ExpenseResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('category')->options(ExpenseCategory::class),
                 Tables\Filters\Filter::make('month')->label('This month')
-                    ->query(fn (Builder $q): Builder => $q->whereBetween('spent_on', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])),
+                    ->query(fn (Builder $query): Builder => $query->whereBetween('spent_on', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])),
             ])
             ->actions([Tables\Actions\EditAction::make()])
             ->bulkActions([Tables\Actions\BulkActionGroup::make([Tables\Actions\DeleteBulkAction::make()])])

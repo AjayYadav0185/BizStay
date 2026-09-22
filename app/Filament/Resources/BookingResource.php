@@ -58,7 +58,7 @@ class BookingResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(BookingStatus::options()),
-                Tables\Filters\Filter::make('live')->label('Live only')->query(fn (Builder $q): Builder => $q->live())->default(),
+                Tables\Filters\Filter::make('live')->label('Live only')->query(fn (Builder $query): Builder => $query->live())->default(),
             ])
             ->actions([
                 Tables\Actions\Action::make('notice')->label('Notice')->icon('heroicon-o-clock')->color('warning')->visible(fn (Booking $r): bool => $r->status === BookingStatus::Active)->requiresConfirmation()->action(fn (Booking $r) => app(BedAllocationService::class)->putOnNotice($r)),

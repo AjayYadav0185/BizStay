@@ -60,7 +60,7 @@ class InquiryResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(InquiryStatus::options()),
                 Tables\Filters\Filter::make('needs_followup')->label('Needs follow-up')
-                    ->query(fn (Builder $q): Builder => $q->whereNotNull('follow_up_date')->whereDate('follow_up_date', '<=', now()->toDateString())->whereNotIn('status', ['converted', 'cancelled'])),
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('follow_up_date')->whereDate('follow_up_date', '<=', now()->toDateString())->whereNotIn('status', ['converted', 'cancelled'])),
             ])
             ->actions([
                 Tables\Actions\Action::make('convert')

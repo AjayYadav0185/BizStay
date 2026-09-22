@@ -77,7 +77,7 @@ class GuestResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('kyc_status')->options(KycStatus::options()),
-                Tables\Filters\Filter::make('staying')->label('Currently staying')->query(fn (Builder $q): Builder => $q->staying()),
+                Tables\Filters\Filter::make('staying')->label('Currently staying')->query(fn (Builder $query): Builder => $query->staying()),
             ])
             ->actions([
                 Tables\Actions\Action::make('verifyKyc')

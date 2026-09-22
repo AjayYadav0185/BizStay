@@ -54,7 +54,7 @@ class MeterReadingResource extends Resource
                 Tables\Columns\TextColumn::make('invoice.invoice_number')->label('Invoice')->placeholder('Unbilled')->toggleable(),
             ])
             ->filters([
-                Tables\Filters\Filter::make('unbilled')->label('Unbilled only')->query(fn (Builder $q): Builder => $q->unbilled()),
+                Tables\Filters\Filter::make('unbilled')->label('Unbilled only')->query(fn (Builder $query): Builder => $query->unbilled()),
             ])
             ->actions([
                 Tables\Actions\Action::make('bulkEntry')

@@ -13,6 +13,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 
 class ComplaintResource extends Resource
@@ -59,11 +60,11 @@ class ComplaintResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(ComplaintStatus::class),
-                Tables\Filters\Filter::make('open')->label('Open only')->query(fn (Builder $q): Builder => $q->open())->default(),
+                Tables\Filters\Filter::make('open')->label('Open only')->query(fn (Builder $query): Builder => $query->open())->default(),
                 Tables\Filters\Filter::make('sla_breached')->label('SLA breached')
-                    ->query(fn (Builder $q): Builder => $q->open()->where('created_at', '<', now()->subHours(72)->toDateTimeString())),
+                    ->query(fn (Builder $query): Builder => $query->open()->where('created_at', '<', now()->subHours(72)->toDateTimeString())),
                 Tables\Filters\Filter::make('unassigned')->label('Unassigned')
-                    ->query(fn (Builder $q): Builder => $q->open()->whereNull('assigned_to')),
+                    ->query(fn (Builder $query): Builder => $query->open()->whereNull('assigned_to')),
             ])
             ->actions([
                 Tables\Actions\Action::make('start')

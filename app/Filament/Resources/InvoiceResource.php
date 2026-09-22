@@ -57,7 +57,7 @@ class InvoiceResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(InvoiceStatus::options()),
-                Tables\Filters\Filter::make('outstanding')->label('Outstanding only')->query(fn (Builder $q): Builder => $q->outstanding())->default(),
+                Tables\Filters\Filter::make('outstanding')->label('Outstanding only')->query(fn (Builder $query): Builder => $query->outstanding())->default(),
             ])
             ->actions([
                 Tables\Actions\Action::make('print')
