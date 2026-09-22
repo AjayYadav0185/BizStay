@@ -140,13 +140,23 @@ class Guest extends Model
 
     /**
      * Total outstanding across every live booking of this guest.
+     * Uses balance (total - paid) so partial payments never overstate dues.
      */
     public function outstandingBalance(): float
     {
-        return (float) Invoice::query()
-            ->whereIn('booking_id', $this->bookings()->select('id'))
+        $ids = $this->bookings()->select('id');
+
+        $due = (float) Invoice::query()
+            ->whereIn('booking_id', $ids)
             ->whereIn('status', ['unpaid', 'partially_paid', 'overdue'])
             ->sum('total_due');
+
+        $paid = (float) Invoice::query()
+            ->whereIn('booking_id', $this->bookings()->select('id'))
+            ->whereIn('status', ['unpaid', 'partially_paid', 'overdue'])
+            ->sum('amount_paid');
+
+        return round($due - $paid, 2);
     }
 
     public function getLabelAttribute(): string

@@ -18,4 +18,18 @@ class EditGuest extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
+    {
+        $aadhaar = (string) ($data['aadhaar_number'] ?? '');
+        unset($data['aadhaar_number']);
+
+        $record->fill($data);
+        if ($aadhaar !== '' && $record instanceof \App\Models\Guest) {
+            $record->setAadhaarNumber($aadhaar);
+        }
+        $record->save();
+
+        return $record;
+    }
 }

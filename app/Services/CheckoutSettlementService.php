@@ -184,7 +184,15 @@ final class CheckoutSettlementService
             }
 
             // 2. Final settlement invoice for the part-used cycle.
-            $invoice = Invoice::query()->create([
+            // A monthly invoice may already exist for this cycle start, and
+            // (booking_id, billing_cycle_start) is UNIQUE — so a settlement
+            // reuses that row instead of inserting a duplicate.
+            $existing = Invoice::query()
+                ->where('booking_id', $locked->id)
+                ->whereDate('billing_cycle_start', $settlement['cycle_start'])
+                ->first();
+
+            $payload = [
                 'booking_id' => $locked->id,
                 'billing_cycle_start' => $settlement['cycle_start'],
                 'billing_cycle_end' => $settlement['cycle_end'],
@@ -199,7 +207,10 @@ final class CheckoutSettlementService
                 'status' => InvoiceStatus::Unpaid,
                 'is_checkout_settlement' => true,
                 'notes' => $options['notes'] ?? "Check-out settlement for {$settlement['guest_name']}",
-            ]);
+            ];
+
+            $invoice = $existing ? tap($existing)->update($payload) : Invoice::query()->create($payload);
+            $invoice = $invoice->refresh();
 
             // 3. Claim this room's still-unbilled readings for the final cycle.
             $this->invoices->claimUnbilledReadings($locked, $date, $invoice);

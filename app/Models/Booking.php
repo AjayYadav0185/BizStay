@@ -166,16 +166,23 @@ class Booking extends Model
 
     /**
      * Outstanding dues across every invoice of this stay.
+     * Uses balance (total - paid) so partial payments never overstate dues.
      */
     public function outstandingDues(): float
     {
-        return (float) $this->invoices()
+        return round((float) $this->invoices()
             ->whereIn('status', [
                 InvoiceStatus::Unpaid->value,
                 InvoiceStatus::PartiallyPaid->value,
                 InvoiceStatus::Overdue->value,
             ])
-            ->sum('total_due');
+            ->sum('total_due') - (float) $this->invoices()
+            ->whereIn('status', [
+                InvoiceStatus::Unpaid->value,
+                InvoiceStatus::PartiallyPaid->value,
+                InvoiceStatus::Overdue->value,
+            ])
+            ->sum('amount_paid'), 2);
     }
 
     /**

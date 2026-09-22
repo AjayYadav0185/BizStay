@@ -92,10 +92,16 @@ final class InvoiceService
 
             [$utilityAmount, $claimAmount, $readingIds] = $this->utilityShare($locked, $cycleStart, $cycleEnd);
 
-            $invoice = Invoice::query()->firstOrNew([
-                'booking_id' => $locked->id,
-                'billing_cycle_start' => $cycleStart->toDateString(),
-            ]);
+            // whereDate: SQLite stores `date` columns with a time component
+            // via Eloquent, so a plain `=` on 'YYYY-MM-DD' would miss and
+            // break idempotency with a UNIQUE violation on re-run.
+            $invoice = Invoice::query()
+                ->where('booking_id', $locked->id)
+                ->whereDate('billing_cycle_start', $cycleStart->toDateString())
+                ->first() ?? new Invoice([
+                    'booking_id' => $locked->id,
+                    'billing_cycle_start' => $cycleStart->toDateString(),
+                ]);
 
             $invoice->fill([
                 'billing_cycle_end' => $cycleEnd->toDateString(),
