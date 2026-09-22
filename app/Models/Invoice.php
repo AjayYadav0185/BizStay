@@ -44,6 +44,7 @@ class Invoice extends Model
         'rent_amount', 'utility_amount', 'maintenance_charges', 'food_deduction',
         'other_charges', 'previous_balance', 'total_due', 'amount_paid',
         'due_date', 'status', 'is_checkout_settlement', 'generated_at', 'paid_at', 'notes',
+        'late_fee_charged_on', 'last_reminded_at',
     ];
 
     /**
@@ -59,6 +60,8 @@ class Invoice extends Model
             'generated_at' => 'datetime',
             'paid_at' => 'datetime',
             'is_checkout_settlement' => 'boolean',
+            'late_fee_charged_on' => 'date',
+            'last_reminded_at' => 'date',
             'rent_amount' => 'decimal:2',
             'utility_amount' => 'decimal:2',
             'maintenance_charges' => 'decimal:2',

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -79,5 +80,46 @@ class Complaint extends Model
             'resolved_at' => now(),
             'resolution_notes' => $notes ?? $this->resolution_notes,
         ])->save();
+    }
+
+    /**
+     * Moves an open complaint to In Progress (started working on it).
+     */
+    public function startWork(): bool
+    {
+        if ($this->status !== ComplaintStatus::Open) {
+            return false;
+        }
+
+        return $this->forceFill(['status' => ComplaintStatus::InProgress])->save();
+    }
+
+    /**
+     * SLA clock: high-priority complaints must be resolved in 24h, everything
+     * else in 72h from the moment they were raised.
+     */
+    public function slaDeadline(): Carbon
+    {
+        $hours = $this->priority === ComplaintPriority::High ? 24 : 72;
+
+        return $this->created_at->copy()->addHours($hours);
+    }
+
+    public function slaBreached(): bool
+    {
+        if ($this->status === ComplaintStatus::Closed) {
+            return false;
+        }
+
+        if ($this->resolved_at !== null) {
+            return $this->resolved_at->greaterThan($this->slaDeadline());
+        }
+
+        return now()->greaterThan($this->slaDeadline());
+    }
+
+    public function hoursOpen(): int
+    {
+        return (int) $this->created_at->diffInHours($this->resolved_at ?? now());
     }
 }

@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\BedStatus;
 use App\Enums\MeterType;
 use App\Enums\PropertyType;
+use App\Services\InvoiceService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -115,5 +116,46 @@ class Property extends Model
             $this->state,
             $this->pincode,
         ])), ' ,');
+    }
+
+    /**
+     * Money actually collected from guests in the calendar month of $on.
+     * Deposit adjustments are excluded — no cash moved.
+     */
+    public function collectedInMonth(?Carbon $on = null): float
+    {
+        $on ??= now();
+        $from = $on->copy()->startOfMonth();
+        $to = $on->copy()->endOfMonth();
+
+        return app(InvoiceService::class)->collectedBetween($from, $to);
+    }
+
+    /**
+     * Operating spend in the calendar month of $on.
+     */
+    public function expensesInMonth(?Carbon $on = null): float
+    {
+        $on ??= now();
+
+        return round((float) Expense::query()
+            ->between($on->copy()->startOfMonth(), $on->copy()->endOfMonth())
+            ->sum('amount'), 2);
+    }
+
+    /**
+     * Simple P&L for a month: collected (inflows) minus operating expenses.
+     * No accruals — this is a cash view a PG owner actually runs the house on.
+     */
+    public function monthlyPnL(?Carbon $on = null): array
+    {
+        $collected = $this->collectedInMonth($on);
+        $expenses = $this->expensesInMonth($on);
+
+        return [
+            'collected' => $collected,
+            'expenses' => $expenses,
+            'profit' => round($collected - $expenses, 2),
+        ];
     }
 }

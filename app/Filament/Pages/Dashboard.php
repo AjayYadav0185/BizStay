@@ -7,6 +7,7 @@ namespace App\Filament\Pages;
 use App\Filament\Widgets\DueInvoicesTable;
 use App\Filament\Widgets\OccupancyByFloorChart;
 use App\Filament\Widgets\OccupancyOverview;
+use App\Filament\Widgets\ProfitLossWidget;
 use App\Filament\Widgets\StayMovementsTable;
 use Filament\Pages\Dashboard as BaseDashboard;
 
@@ -30,6 +31,7 @@ class Dashboard extends BaseDashboard
             StayMovementsTable::class,
             DueInvoicesTable::class,
             OccupancyByFloorChart::class,
+            ProfitLossWidget::class,
         ];
     }
 

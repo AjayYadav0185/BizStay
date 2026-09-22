@@ -51,6 +51,7 @@ class Booking extends Model
         'actual_check_out_date', 'monthly_rent', 'security_deposit_amount',
         'deposit_refunded_amount', 'rent_due_day', 'food_included',
         'notice_served_on', 'status', 'checked_out_at', 'checkout_settlement', 'notes',
+        'assigned_marketer', 'converted_inquiry_id',
     ];
 
     /**
@@ -97,6 +98,16 @@ class Booking extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function assignedMarketer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_marketer');
+    }
+
+    public function convertedFromInquiry(): BelongsTo
+    {
+        return $this->belongsTo(Inquiry::class, 'converted_inquiry_id');
     }
 
     /**

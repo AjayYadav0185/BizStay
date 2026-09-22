@@ -20,6 +20,7 @@ use App\Models\UtilityMeter;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Monthly billing.
@@ -303,6 +304,105 @@ final class InvoiceService
             ->whereIn('status', [InvoiceStatus::Unpaid->value, InvoiceStatus::PartiallyPaid->value])
             ->whereDate('due_date', '<', now()->toDateString())
             ->update(['status' => InvoiceStatus::Overdue->value]);
+    }
+
+    /**
+     * Late-fee engine — the "stored but never charged" percent finally charges.
+     *
+     * For every overdue invoice (balance > 0) the configured
+     * late_fee_percent of the outstanding balance is added as a visible
+     * other_charges line. Guarded by the late_fee_charged_on marker so a
+     * re-run never double-charges the same invoice.
+     *
+     * @return array{charged: int, amount: float}
+     */
+    public function applyLateFees(): array
+    {
+        $charged = 0;
+        $total = 0.0;
+
+        $overdue = Invoice::query()
+            ->whereIn('status', [
+                InvoiceStatus::Unpaid->value,
+                InvoiceStatus::PartiallyPaid->value,
+                InvoiceStatus::Overdue->value,
+            ])
+            ->whereDate('due_date', '<', now()->toDateString())
+            ->whereNull('late_fee_charged_on')
+            ->with('booking')
+            ->get();
+
+        foreach ($overdue as $invoice) {
+            $balance = $invoice->balanceDue();
+
+            if ($balance <= 0.0) {
+                continue;
+            }
+
+            $fee = $this->proration->lateFee($balance);
+
+            if ($fee <= 0.0) {
+                continue;
+            }
+
+            $invoice->forceFill([
+                'other_charges' => round((float) $invoice->other_charges + $fee, 2),
+                'late_fee_charged_on' => now()->toDateString(),
+                'notes' => trim(($invoice->notes ? $invoice->notes."\n" : '')
+                    .sprintf('Late fee %s%% (₹%s) on overdue ₹%s charged %s.',
+                        rtrim(rtrim((string) (Property::current()?->late_fee_percent ?? 0), '0'), '.'),
+                        number_format($fee, 2),
+                        number_format($balance, 2),
+                        now()->toDateString())),
+            ])->save();
+
+            $charged++;
+            $total = round($total + $fee, 2);
+        }
+
+        return ['charged' => $charged, 'amount' => $total];
+    }
+
+    /**
+     * Overdue invoices that have not been reminded in the last 3 days — the
+     * rows of the "Remind" action / nightly reminder job.
+     *
+     * @return Collection<int, Invoice>
+     */
+    public function invoicesDueForReminder(): Collection
+    {
+        return Invoice::query()
+            ->whereIn('status', [
+                InvoiceStatus::Unpaid->value,
+                InvoiceStatus::PartiallyPaid->value,
+                InvoiceStatus::Overdue->value,
+            ])
+            ->whereDate('due_date', '<', now()->toDateString())
+            ->where(function ($query): void {
+                $query->whereNull('last_reminded_at')
+                    ->orWhere('last_reminded_at', '<', now()->subDays(3)->toDateString());
+            })
+            ->with(['booking.guest', 'booking.bed.room'])
+            ->orderBy('due_date')
+            ->get();
+    }
+
+    /**
+     * Stamps the reminder marker on an invoice and logs the touchpoint so the
+     * audit trail shows when the guest was chased (SMS/WhatsApp/Email ride on
+     * top of this later — the ledger only records that it happened).
+     */
+    public function markReminded(Invoice $invoice, string $channel = 'manual'): void
+    {
+        $invoice->forceFill(['last_reminded_at' => now()->toDateString()])->save();
+
+        Log::notice('bizstay.invoice.reminder', [
+            'invoice' => $invoice->invoice_number,
+            'guest' => $invoice->booking?->guest?->full_name,
+            'balance' => $invoice->balanceDue(),
+            'channel' => $channel,
+            'by' => auth()->id(),
+        ]);
     }
 
     /**

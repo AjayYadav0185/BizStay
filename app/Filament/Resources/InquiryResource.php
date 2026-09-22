@@ -6,8 +6,8 @@ namespace App\Filament\Resources;
 
 use App\Enums\InquiryStatus;
 use App\Filament\Resources\InquiryResource\Pages;
-use App\Models\Guest;
 use App\Models\Inquiry;
+use App\Services\InquiryConversionService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -63,17 +63,48 @@ class InquiryResource extends Resource
                     ->query(fn (Builder $q): Builder => $q->whereNotNull('follow_up_date')->whereDate('follow_up_date', '<=', now()->toDateString())->whereNotIn('status', ['converted', 'cancelled'])),
             ])
             ->actions([
-                Tables\Actions\Action::make('convert')->label('Convert')->icon('heroicon-o-check-circle')->color('success')
+                Tables\Actions\Action::make('convert')
+                    ->label('Convert to Tenant')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
                     ->visible(fn (Inquiry $r): bool => $r->status->isOpen() && ! $r->converted_guest_id)
+                    ->modalHeading('Convert lead to tenant')
+                    ->modalDescription('Creates/reuses the guest, verifies KYC, parks the bed and raises the first prorated invoice — all in one step.')
                     ->form([
-                        Forms\Components\TextInput::make('full_name')->default(fn (Inquiry $r): string => $r->name)->required(),
-                        Forms\Components\TextInput::make('phone')->default(fn (Inquiry $r): string => $r->phone)->required(),
-                        Forms\Components\TextInput::make('email')->default(fn (Inquiry $r): ?string => $r->email),
+                        Forms\Components\Section::make('Guest')->schema([
+                            Forms\Components\TextInput::make('full_name')->default(fn (Inquiry $r): string => $r->name)->required(),
+                            Forms\Components\TextInput::make('phone')->default(fn (Inquiry $r): string => $r->phone)->required()->tel(),
+                            Forms\Components\TextInput::make('email')->default(fn (Inquiry $r): ?string => $r->email),
+                            Forms\Components\Toggle::make('verify_kyc')->label('ID seen & KYC verified')->default(true)->helperText('Tick only if the original ID was physically verified at the desk.'),
+                        ])->columns(2)->collapsible(),
+                        Forms\Components\Section::make('Stay terms')->schema([
+                            Forms\Components\Select::make('bed_id')
+                                ->label('Bed')
+                                ->options(fn (): array => app(InquiryConversionService::class)->allocatableBedOptions())
+                                ->searchable()
+                                ->required()
+                                ->live(),
+                            Forms\Components\DatePicker::make('check_in_date')->default(now())->required()->native(false),
+                            Forms\Components\DatePicker::make('expected_check_out_date')->native(false),
+                            Forms\Components\TextInput::make('monthly_rent')
+                                ->numeric()->prefix('₹')
+                                ->helperText('Blank = the bed\'s standard rent'),
+                            Forms\Components\TextInput::make('security_deposit_amount')->numeric()->prefix('₹')
+                                ->helperText('Blank = property policy (rent × deposit months)'),
+                            Forms\Components\TextInput::make('rent_due_day')->numeric()->minValue(1)->maxValue(28)->default(5),
+                            Forms\Components\Toggle::make('food_included')->default(true)->live(),
+                        ])->columns(3),
                     ])
                     ->action(function (Inquiry $record, array $data): void {
-                        $guest = Guest::query()->firstOrCreate(['phone' => $data['phone']], ['full_name' => $data['full_name'], 'email' => $data['email'] ?? null]);
-                        $record->forceFill(['status' => InquiryStatus::Converted, 'converted_guest_id' => $guest->id])->save();
-                        Notification::make()->title('Converted: '.$guest->full_name)->success()->send();
+                        $result = app(InquiryConversionService::class)->convert($record, $data);
+
+                        Notification::make()
+                            ->title('Converted: '.$result['guest']->full_name)
+                            ->body($result['invoice']
+                                ? 'Stay started on '.$result['booking']->bed->bed_code.' · first invoice '.$result['invoice']->invoice_number.' (₹'.number_format((float) $result['invoice']->total_due).')'
+                                : 'Stay started on '.$result['booking']->bed->bed_code.' · first invoice will be raised on move-in day')
+                            ->success()
+                            ->send();
                     }),
                 Tables\Actions\EditAction::make(),
             ])

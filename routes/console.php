@@ -4,6 +4,7 @@ use App\Models\Property;
 use App\Services\InvoiceService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -30,4 +31,36 @@ Schedule::call(function (): void {
         app(InvoiceService::class)->generateForCycle();
     }
 })->dailyAt('02:00')->name('bizstay:generate-monthly-invoices')->withoutOverlapping();
+
+/*
+| Late-fee engine + overdue reminders.
+|
+| Fees: overdue invoices (balance > 0) get the property's late_fee_percent
+| added as a visible other_charges line, guarded by late_fee_charged_on so a
+| re-run never double-charges.
+|
+| Reminders: every overdue invoice not reminded in the last 3 days is logged
+| as a touchpoint (last_reminded_at + structured log entry) — the SMS/WhatsApp
+| sender can later hook into the same spot.
+*/
+Schedule::call(function (): void {
+    $result = app(InvoiceService::class)->applyLateFees();
+
+    if ($result['charged'] > 0) {
+        Log::notice('bizstay.late_fees.charged', $result);
+    }
+})->dailyAt('06:00')->name('bizstay:apply-late-fees')->withoutOverlapping();
+
+Schedule::call(function (): void {
+    $reminded = 0;
+
+    foreach (app(InvoiceService::class)->invoicesDueForReminder() as $invoice) {
+        app(InvoiceService::class)->markReminded($invoice, 'scheduled');
+        $reminded++;
+    }
+
+    if ($reminded > 0) {
+        Log::notice('bizstay.overdue_reminders.sent', ['count' => $reminded]);
+    }
+})->dailyAt('10:00')->name('bizstay:remind-overdue-invoices')->withoutOverlapping();
 

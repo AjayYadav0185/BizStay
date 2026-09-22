@@ -9,6 +9,7 @@ use App\Filament\Resources\GuestResource\Pages;
 use App\Models\Guest;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -78,7 +79,33 @@ class GuestResource extends Resource
                 Tables\Filters\SelectFilter::make('kyc_status')->options(KycStatus::options()),
                 Tables\Filters\Filter::make('staying')->label('Currently staying')->query(fn (Builder $q): Builder => $q->staying()),
             ])
-            ->actions([Tables\Actions\EditAction::make()])
+            ->actions([
+                Tables\Actions\Action::make('verifyKyc')
+                    ->label('Verify KYC')
+                    ->icon('heroicon-o-shield-check')
+                    ->color('success')
+                    ->visible(fn (Guest $r): bool => $r->kyc_status !== KycStatus::Verified)
+                    ->requiresConfirmation()
+                    ->modalDescription('Mark this guest\'s KYC as verified? Only verified (or explicitly bypassed) guests can be allocated a bed.')
+                    ->action(function (Guest $record): void {
+                        $record->forceFill(['kyc_status' => KycStatus::Verified, 'kyc_verified_at' => now()])->save();
+
+                        Notification::make()->title('KYC verified: '.$record->full_name)->success()->send();
+                    }),
+                Tables\Actions\Action::make('rejectKyc')
+                    ->label('Reject KYC')
+                    ->icon('heroicon-o-shield-exclamation')
+                    ->color('danger')
+                    ->visible(fn (Guest $r): bool => $r->kyc_status === KycStatus::Pending)
+                    ->requiresConfirmation()
+                    ->color('danger')
+                    ->action(function (Guest $record): void {
+                        $record->forceFill(['kyc_status' => KycStatus::Rejected])->save();
+
+                        Notification::make()->title('KYC rejected: '.$record->full_name)->danger()->send();
+                    }),
+                Tables\Actions\EditAction::make(),
+            ])
             ->bulkActions([Tables\Actions\BulkActionGroup::make([Tables\Actions\DeleteBulkAction::make()])])
             ->defaultSort('full_name');
     }

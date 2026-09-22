@@ -101,4 +101,23 @@ class MeterReading extends Model
     {
         return $this->meter?->room?->room_number ?? '—';
     }
+
+    /**
+     * Anomaly flag for the readings board: this reading's consumption is more
+     * than twice the meter's historical average. Purely advisory — the amount
+     * still stands until a manager investigates.
+     */
+    public function isAnomalous(): bool
+    {
+        $avg = static::query()
+            ->where('meter_id', $this->meter_id)
+            ->where('id', '!=', $this->id)
+            ->whereDate('reading_date', '<', $this->reading_date->toDateString())
+            ->where('consumption', '>', 0)
+            ->avg('consumption');
+
+        return $avg !== null
+            && (float) $avg > 0
+            && (float) $this->consumption > 2 * (float) $avg;
+    }
 }

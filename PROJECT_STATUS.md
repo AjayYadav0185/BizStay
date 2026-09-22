@@ -81,15 +81,15 @@ Fix: create the 10 `*Resource.php` files reusing Bed/Room patterns. Every table 
 
 
 ### P1 — Complete core PG loop (Weeks 2-3)
-5. Inquiry-to-tenant: one-click Convert (Guest + allocate bed + first prorated invoice), overdue follow-up badge.
-6. Check-in wizard: KYC verify/reject, bed picker (floor/sharing/AC), deposit auto-calc, first-cycle preview.
-7. Notice & checkout UI: settlement preview modal (rent adjust, unbilled utility, food credit, damages, arrears -> refund/shortfall) + collect/refund buttons.
-8. Money UI: invoice PDF + receipt, Mark Paid (method + UTR), overdue Remind, monthly collection report.
-9. Meters UI: floor bulk-entry grid (`metersOnFloor()` exists), history, claimed-by-invoice link, anomaly flag (>2x avg).
-10. Complaints board: kanban open/in_progress/resolved/closed, photo, assign staff, SLA timer.
+5. ~~Inquiry-to-tenant: one-click Convert (Guest + allocate bed + first prorated invoice), overdue follow-up badge.~~ DONE 22-Sep: `InquiryConversionService` + full convert wizard (guest reuse, KYC verify, bed picker, deposit policy, first prorated invoice).
+6. ~~Check-in wizard: KYC verify/reject, bed picker (floor/sharing/AC), deposit auto-calc, first-cycle preview.~~ DONE 22-Sep: BookingResource create (allocate() via service) + GuestResource Verify/Reject KYC row actions.
+7. ~~Notice & checkout UI: settlement preview modal + collect/refund buttons.~~ DONE 22-Sep (earlier): notice/withdraw/settle-and-out actions calling CheckoutSettlementService.
+8. ~~Money UI: invoice PDF + receipt, Mark Paid (method + UTR), overdue Remind, monthly collection report.~~ DONE 22-Sep: printable invoice (`/invoices/{id}/print`, auth-guarded), Collect (UTR-validated), Remind + Remind-all-overdue, P&L widget.
+9. ~~Meters UI: floor bulk-entry grid (`metersOnFloor()` exists), history, claimed-by-invoice link, anomaly flag (>2x avg).~~ DONE 22-Sep: bulk floor-entry modal (per-meter prev/rate hints, idempotent save), anomaly icon column (`MeterReading::isAnomalous()`), invoice link column.
+10. ~~Complaints board: kanban open/in_progress/resolved/closed, photo, assign staff, SLA timer.~~ DONE 22-Sep (list board): Start/Assign/Resolve actions, staff column, SLA badge (24h high / 72h rest), SLA-breached + unassigned filters. Photo upload still open.
 
 ### P2 — Money maturity + trust (Weeks 4-5)
-11. Late-fee engine: apply `late_fee_percent` on overdue as visible line item (stored, never charged today).
+11. ~~Late-fee engine: apply `late_fee_percent` on overdue as visible line item (stored, never charged today).~~ DONE 22-Sep: `InvoiceService::applyLateFees()` — 10% style fee into other_charges, once per invoice (late_fee_charged_on guard), nightly 06:00 cron + admin button.
 12. Expense approvals + `receipt_path` preview, budget vs actual, monthly P&L widget (collected - expenses).
 13. Deposit ledger per booking (collected -> applied -> refunded, never negative).
 14. Exports: rent roll / dues aging / occupancy Excel; GST-ready invoice if needed.
@@ -124,8 +124,8 @@ Fix: create the 10 `*Resource.php` files reusing Bed/Room patterns. Every table 
 1. `fix(admin): restore 10 missing *Resource.php + nav groups` DONE 22-Sep
 2. `chore(db): DatabaseSeeder + 13 factories + demo admin` DONE 22-Sep
 3. `test(core): proration + allocation lock + invoice idempotency + settlement` DONE 22-Sep
-4. `feat(stay): inquiry convert + check-in wizard + checkout actions`
-5. `feat(billing): invoice PDF + Mark Paid + overdue remind + P&L widget`
+4. `feat(stay): inquiry convert + check-in wizard + checkout actions` DONE 22-Sep (InquiryConversionService, KYC actions, convert wizard)
+5. `feat(billing): invoice PDF + Mark Paid + overdue remind + P&L widget` DONE 22-Sep (+ late-fee engine, bulk meter entry, complaint SLA — 14/14 tests green)
 
 ## 7. Risks / Decisions
 1. Singleton vs multi-property: keep singleton until P3 (schema designed for it).
