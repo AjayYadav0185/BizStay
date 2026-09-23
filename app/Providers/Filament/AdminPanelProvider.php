@@ -7,13 +7,9 @@ use App\Filament\Widgets\DueInvoicesTable;
 use App\Filament\Widgets\OccupancyByFloorChart;
 use App\Filament\Widgets\OccupancyOverview;
 use App\Filament\Widgets\StayMovementsTable;
-use Filament\Http\Middleware\Authenticate;
-use Filament\Http\Middleware\AuthenticateSession;
-use Filament\Http\Middleware\DisableBladeIconComponents;
-use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
+use Filament\Support\Colors\Color as SupportColors;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -32,7 +28,10 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->brandName('BizStay PG')
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => '#f43f5e',  // Warm Rose Coral - unique accent
+                'secondary' => '#486581', // Deep Slate Blue
+                'tertiary' => '#334e68',
+                'gray' => SupportColors::Slate,
             ])
             ->navigationGroups([
                 'Property',
@@ -57,15 +56,15 @@ class AdminPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
-                AuthenticateSession::class,
+                \Filament\Http\Middleware\AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
-                DisableBladeIconComponents::class,
-                DispatchServingFilamentEvent::class,
+                \Filament\Http\Middleware\DisableBladeIconComponents::class,
+                \Filament\Http\Middleware\DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                \Filament\Http\Middleware\Authenticate::class,
             ]);
     }
 }

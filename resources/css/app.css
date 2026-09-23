@@ -3,7 +3,820 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* ============================================
+   BIZSTAY - URBANSTAY PREMIUM THEME
+   Unique hospitality management design
+   ============================================ */
+
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    /* Primary Typography - Clean modern sans */
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    
+    /* Accent Display Font */
+    --font-display: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ============================================
+   COLOR SYSTEM - Deep Navy & Warm Rose
+   ============================================ */
+
+:root {
+    /* Primary - Deep Slate Blue */
+    --bs-primary-50: #f0f4f8;
+    --bs-primary-100: #d9e2ec;
+    --bs-primary-600: #486581;
+    --bs-primary-700: #334e68;
+    --bs-primary-800: #243b53;
+    --bs-primary-900: #102a43;
+    
+    /* Accent - Warm Rose Coral */
+    --bs-accent-400: #fb7185;
+    --bs-accent-500: #f43f5e;
+    --bs-accent-600: #e11d48;
+    --bs-accent-700: #be123c;
+    --bs-accent-800: #9f1239;
+    
+    /* Success Green */
+    --bs-success-50: #f0fdf4;
+    --bs-success-500: #22c55e;
+    --bs-success-600: #16a34a;
+    
+    /* Warning Amber */
+    --bs-warning-50: #fffbeb;
+    --bs-warning-500: #f59e0b;
+    --bs-warning-600: #d97706;
+    
+    /* Danger Red */
+    --bs-danger-50: #fef2f2;
+    --bs-danger-500: #ef4444;
+    --bs-danger-600: #dc2626;
+    --bs-danger-700: #b91c1c;
+}
+
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+
+/* Panel Background - Subtle gradient */
+.filament-app {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+/* Selection Color */
+::selection {
+    background: rgba(244, 63, 94, 0.2);
+    color: #1e293b;
+}
+
+/* Focus Visible for Accessibility */
+*:focus-visible {
+    outline: 2px solid #f43f5e;
+    outline-offset: 2px;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+    border: 2px solid #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9fb3c8;
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Global Typography */
+body {
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+}
+
+/* ============================================
+   SIDEBAR STYLING
+   ============================================ */
+
+.filament-sidebar {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.filament-sidebar-brand {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334e68 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 1.25rem 1rem !important;
+}
+
+.filament-sidebar-brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.filament-sidebar-brand-name {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #ffffff !important;
+    letter-spacing: -0.02em;
+}
+
+.filament-sidebar-brand-name span {
+    color: #f43f5e;
+}
+
+/* Navigation Items */
+.filament-nav-item {
+    border-radius: 0.5rem !important;
+    margin: 0.125rem 0.5rem !important;
+    transition: all 0.2s ease !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.filament-nav-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(98, 125, 152, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.filament-nav-item:hover::before {
+    opacity: 1;
+}
+
+.filament-nav-item:hover {
+    background: transparent !important;
+    transform: translateX(2px);
+}
+
+.filament-nav-item.is-active {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.15) 0%, rgba(98, 125, 152, 0.2) 100%) !important;
+    border: 1px solid rgba(244, 63, 94, 0.3) !important;
+}
+
+.filament-nav-item.is-active .filament-nav-item-label {
+    color: #f43f5e !important;
+    font-weight: 600;
+}
+
+.filament-nav-item-label {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.filament-nav-item:hover .filament-nav-item-label {
+    color: #ffffff !important;
+}
+
+.filament-nav-item-icon {
+    color: rgba(255, 255, 255, 0.5) !important;
+    transition: color 0.2s ease;
+}
+
+.filament-nav-item:hover .filament-nav-item-icon,
+.filament-nav-item.is-active .filament-nav-item-icon {
+    color: #f43f5e !important;
+}
+
+/* ============================================
+   HEADER / TOP BAR
+   ============================================ */
+
+.filament-header {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(12px) !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.filament-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filament-header-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1e293b !important;
+}
+
+/* Search bar */
+.filament-search {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.5rem !important;
+    background: #ffffff !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.filament-search:focus {
+    border-color: #f43f5e !important;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1) !important;
+}
+
+/* ============================================
+   CARDS & PAPER
+   ============================================ */
+
+.filament-paper {
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    transition: all 0.2s ease !important;
+}
+
+.filament-paper:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03) !important;
+    border-color: #cbd5e1 !important;
+}
+
+.filament-card {
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 0.75rem !important;
+    overflow: hidden;
+    transition: all 0.25s ease !important;
+}
+
+.filament-card-header {
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 1rem 1.25rem !important;
+}
+
+.filament-card-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1e293b !important;
+}
+
+/* Widget cards */
+.filament-widget {
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 0.75rem !important;
+    padding: 1.25rem !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    transition: all 0.2s ease !important;
+}
+
+.filament-widget:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Stat cards with hover effect */
+.filament-stat-card {
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 0.75rem !important;
+    padding: 1.25rem !important;
+    transition: all 0.3s ease !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.filament-stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, rgba(244, 63, 94, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.filament-stat-card:hover::after {
+    opacity: 1;
+}
+
+.filament-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+    border-color: rgba(244, 63, 94, 0.2) !important;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.filament-btn {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 600 !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.2s ease !important;
+    letter-spacing: 0 !important;
+}
+
+.filament-btn[data-type="primary"] {
+    background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(244, 63, 94, 0.25) !important;
+}
+
+.filament-btn[data-type="primary"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(244, 63, 94, 0.35) !important;
+    background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%) !important;
+}
+
+.filament-btn[data-type="primary"]:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(244, 63, 94, 0.2) !important;
+}
+
+.filament-btn[data-type="secondary"] {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #486581 !important;
+}
+
+.filament-btn[data-type="secondary"]:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #1e293b !important;
+}
+
+.filament-btn[data-type="danger"] {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2) !important;
+}
+
+.filament-btn[data-type="danger"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3) !important;
+}
+
+.filament-btn[data-type="outline"] {
+    background: transparent !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #486581 !important;
+}
+
+.filament-btn[data-type="outline"]:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #1e293b !important;
+}
+
+.filament-btn-sm { padding: 0.375rem 0.75rem !important; font-size: 0.75rem !important; }
+.filament-btn-md { padding: 0.5rem 1rem !important; font-size: 0.875rem !important; }
+.filament-btn-lg { padding: 0.625rem 1.25rem !important; font-size: 0.9375rem !important; }
+
+/* ============================================
+   FORM INPUTS
+   ============================================ */
+
+.filament-form-input {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.5rem !important;
+    background: #ffffff !important;
+    padding: 0.625rem 0.875rem !important;
+    font-size: 0.875rem !important;
+    color: #1e293b !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
+}
+
+.filament-form-input:hover { border-color: #cbd5e1 !important; }
+
+.filament-form-input:focus {
+    border-color: #f43f5e !important;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1) !important;
+    outline: none !important;
+}
+
+.filament-form-input::placeholder { color: #94a3b8 !important; }
+
+.filament-form-select {
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23627d98'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.75rem center !important;
+    background-size: 1rem !important;
+    padding-right: 2.5rem !important;
+}
+
+.filament-form-label {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 0.8125rem !important;
+    color: #486581 !important;
+    margin-bottom: 0.375rem !important;
+}
+
+.filament-checkbox,
+.filament-radio { accent-color: #f43f5e !important; }
+
+/* ============================================
+   TABLES
+   ============================================ */
+
+.filament-table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+}
+
+.filament-table th {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 0.75rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: #627d98 !important;
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 0.75rem 1rem !important;
+}
+
+.filament-table td {
+    padding: 0.875rem 1rem !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    color: #334e68 !important;
+    font-size: 0.875rem !important;
+    transition: background 0.15s ease !important;
+}
+
+.filament-table tbody tr:hover td { background: rgba(244, 63, 94, 0.02) !important; }
+.filament-table tbody tr:last-child td { border-bottom: none !important; }
+
+.filament-table-cell-action { opacity: 0.6; transition: opacity 0.2s ease !important; }
+.filament-table-row:hover .filament-table-cell-action { opacity: 1; }
+
+/* ============================================
+   BADGES
+   ============================================ */
+
+.filament-badge {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.625rem !important;
+    border-radius: 9999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+}
+
+.filament-badge[data-color="primary"] { background: rgba(98, 125, 152, 0.1) !important; color: #486581 !important; }
+.filament-badge[data-color="danger"] { background: rgba(239, 68, 68, 0.1) !important; color: #dc2626 !important; }
+.filament-badge[data-color="success"] { background: rgba(34, 197, 94, 0.1) !important; color: #16a34a !important; }
+.filament-badge[data-color="warning"] { background: rgba(245, 158, 11, 0.1) !important; color: #d97706 !important; }
+.filament-badge[data-color="info"] { background: rgba(59, 130, 246, 0.1) !important; color: #2563eb !important; }
+
+/* ============================================
+   MODALS & DIALOGS
+   ============================================ */
+
+.filament-modal {
+    background: #ffffff !important;
+    border-radius: 0.75rem !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.filament-modal-overlay {
+    background: rgba(15, 23, 42, 0.5) !important;
+    backdrop-filter: blur(4px) !important;
+}
+
+.filament-modal-header {
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 1.25rem 1.5rem !important;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%) !important;
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+}
+
+.filament-modal-title {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 1.125rem !important;
+    color: #1e293b !important;
+}
+
+.filament-modal-body { padding: 1.5rem !important; }
+
+.filament-modal-footer {
+    border-top: 1px solid #f1f5f9 !important;
+    padding: 1rem 1.5rem !important;
+    background: #fafbfc !important;
+    border-radius: 0 0 0.75rem 0.75rem !important;
+}
+
+/* ============================================
+   TABS
+   ============================================ */
+
+.filament-tabs { border-bottom: 1px solid #e2e8f0 !important; padding: 0 !important; }
+
+.filament-tab {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    color: #627d98 !important;
+    padding: 0.625rem 1rem !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+    transition: all 0.2s ease !important;
+    position: relative;
+}
+
+.filament-tab:hover { color: #486581 !important; background: #f8fafc !important; }
+.filament-tab.is-active { color: #f43f5e !important; background: transparent !important; }
+
+.filament-tab.is-active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #f43f5e !important;
+    border-radius: 1px 1px 0 0;
+}
+
+/* ============================================
+   TOASTS
+   ============================================ */
+
+.filament-toast {
+    border-radius: 0.5rem !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Dropdowns */
+.filament-dropdown-menu {
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+    padding: 0.25rem !important;
+}
+
+.filament-dropdown-item {
+    border-radius: 0.375rem !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+    color: #334e68 !important;
+    transition: all 0.15s ease !important;
+}
+
+.filament-dropdown-item:hover { background: #f8fafc !important; color: #1e293b !important; }
+.filament-dropdown-item.is-active { background: rgba(244, 63, 94, 0.1) !important; color: #f43f5e !important; }
+
+/* Pagination */
+.filament-pagination-link {
+    border: 1px solid #e2e8f0 !important;
+    color: #486581 !important;
+    border-radius: 0.375rem !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    transition: all 0.15s ease !important;
+}
+
+.filament-pagination-link:hover { border-color: #cbd5e1 !important; color: #1e293b !important; background: #f8fafc !important; }
+.filament-pagination-link.is-active { background: #f43f5e !important; border-color: #f43f5e !important; color: #ffffff !important; }
+
+/* Action menu & tree */
+.filament-action-menu-trigger { color: #94a3b8 !important; transition: color 0.2s ease !important; }
+.filament-action-menu-trigger:hover { color: #f43f5e !important; }
+
+.filament-tree-item { border-radius: 0.375rem !important; transition: background 0.15s ease !important; }
+.filament-tree-item:hover { background: #f8fafc !important; }
+
+/* Toggle & slider */
+.filament-toggle { accent-color: #f43f5e !important; }
+.filament-slider { accent-color: #f43f5e !important; height: 6px !important; border-radius: 3px !important; }
+.filament-slider::-webkit-slider-thumb {
+    appearance: none !important;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 50% !important;
+    background: #ffffff !important;
+    border: 2px solid #f43f5e !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    cursor: pointer !important;
+    transition: transform 0.15s ease !important;
+}
+.filament-slider::-webkit-slider-thumb:hover { transform: scale(1.1); }
+
+/* Rating & pills */
+.filament-rating { color: #f59e0b !important; font-size: 1.125rem !important; }
+
+.filament-pills-tab {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 0.8125rem !important;
+    color: #627d98 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.2s ease !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+}
+.filament-pills-tab:hover { background: #f1f5f9 !important; color: #486581 !important; }
+.filament-pills-tab.is-active {
+    background: rgba(244, 63, 94, 0.1) !important;
+    border-color: rgba(244, 63, 94, 0.3) !important;
+    color: #f43f5e !important;
+    font-weight: 600 !important;
+}
+
+.filament-keyboard-shortcut {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.25rem !important;
+    padding: 0.125rem 0.375rem !important;
+    font-size: 0.6875rem !important;
+    font-weight: 600 !important;
+    color: #627d98 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* File Upload */
+.filament-file-upload {
+    border: 2px dashed #e2e8f0 !important;
+    border-radius: 0.5rem !important;
+    background: #fafbfc !important;
+    transition: all 0.2s ease !important;
+}
+.filament-file-upload:hover { border-color: #f43f5e !important; background: rgba(244, 63, 94, 0.02) !important; }
+.filament-file-upload[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+/* Date/Time Picker */
+.filament-form-date-picker-input,
+.filament-form-time-picker-input { cursor: pointer; }
+.filament-form-date-picker-popover,
+.filament-form-time-picker-popover {
+    border-radius: 0.5rem !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+}
+.filament-color-picker-popover { border-radius: 0.5rem !important; border: 1px solid rgba(226, 232, 240, 0.8) !important; }
+
+/* Calendar */
+.filament-calendar {
+    border-radius: 0.5rem !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+}
+.filament-calendar-header {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+.filament-calendar-cell { border-radius: 0.375rem !important; transition: all 0.15s ease !important; }
+.filament-calendar-cell:hover { background: #f8fafc !important; }
+.filament-calendar-cell.is-selected { background: #f43f5e !important; color: #ffffff !important; }
+.filament-calendar-cell.is-today { font-weight: 600 !important; color: #f43f5e !important; }
+
+/* Tooltip */
+.filament-tooltip {
+    background: #1e293b !important;
+    color: #ffffff !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    padding: 0.25rem 0.625rem !important;
+    border-radius: 0.25rem !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Loading States */
+.filament-skeleton {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%) !important;
+    background-size: 200% 100% !important;
+    animation: skeleton-loading 1.5s ease-in-out infinite !important;
+    border-radius: 0.375rem !important;
+}
+.filament-spinner { border-color: rgba(244, 63, 94, 0.3) !important; border-top-color: #f43f5e !important; }
+.filament-progress-progress { background: #e2e8f0 !important; border-radius: 9999px !important; height: 8px !important; overflow: hidden !important; }
+.filament-progress-bar {
+    background: linear-gradient(90deg, #f43f5e 0%, #fb7185 100%) !important;
+    border-radius: 9999px !important;
+    transition: width 0.3s ease !important;
+}
+
+/* Empty State */
+.filament-empty-state { text-align: center !important; padding: 3rem 1.5rem !important; }
+.filament-empty-state-icon { color: #cbd5e1 !important; margin-bottom: 1rem !important; }
+.filament-empty-state-title { font-family: 'Plus Jakarta Sans', sans-serif !important; font-weight: 600 !important; font-size: 1rem !important; color: #486581 !important; margin-bottom: 0.5rem !important; }
+.filament-empty-state-description { font-size: 0.875rem !important; color: #94a3b8 !important; max-width: 300px !important; margin: 0 auto 1rem !important; }
+
+/* Widgets & Cards */
+.filament-widget {
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 0.75rem !important;
+    padding: 1.25rem !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    transition: all 0.2s ease !important;
+}
+.filament-widget:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important; }
+
+.filament-paper {
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    transition: all 0.2s ease !important;
+}
+.filament-paper:hover { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03) !important; border-color: #cbd5e1 !important; }
+
+.filament-card {
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 0.75rem !important;
+    overflow: hidden;
+    transition: all 0.25s ease !important;
+}
+.filament-card-header { border-bottom: 1px solid #f1f5f9 !important; padding: 1rem 1.25rem !important; }
+.filament-card-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: 1rem; color: #1e293b !important; }
+
+/* Stat Cards */
+.filament-stat-card {
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 0.75rem !important;
+    padding: 1.25rem !important;
+    transition: all 0.3s ease !important;
+    position: relative;
+    overflow: hidden;
+}
+.filament-stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, rgba(244, 63, 94, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.filament-stat-card:hover::after { opacity: 1; }
+.filament-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+    border-color: rgba(244, 63, 94, 0.2) !important;
+}
+
+/* Checkbox/Radio Labels & TreeSelect */
+.filament-checkbox-wrapper,
+.filament-radio-wrapper { gap: 0.5rem !important; }
+.filament-checkbox-label,
+.filament-radio-label { font-size: 0.875rem !important; color: #334e68 !important; cursor: pointer !important; }
+
+.filament-tree-select-button {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.5rem !important;
+    background: #ffffff !important;
+    padding: 0.625rem 0.875rem !important;
+    font-size: 0.875rem !important;
+    transition: all 0.2s ease !important;
+}
+.filament-tree-select-button:hover { border-color: #cbd5e1 !important; }
+.filament-tree-select-button:focus { border-color: #f43f5e !important; box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1) !important; }
+
+/* Responsive & Print */
+@media (max-width: 768px) {
+    .filament-sidebar { width: 100% !important; height: auto !important; position: relative !important; }
+    .filament-stat-card { padding: 1rem !important; }
+    .filament-table { font-size: 0.8125rem !important; }
+    .filament-table th, .filament-table td { padding: 0.5rem 0.625rem !important; }
+}
+@media print {
+    .filament-sidebar, .filament-header, .filament-action-menu, .filament-search { display: none !important; }
+    .filament-paper { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
 }
