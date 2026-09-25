@@ -1,0 +1,33 @@
+# Git / VCS
+.git
+.gitattributes
+.gitignore
+
+# Local dependencies (installed inside the image at build time)
+node_modules
+vendor
+
+# React Native / mobile app — not part of the web deployment
+mobile
+
+# Secrets & local env files (Render injects env vars via the dashboard)
+.env
+.env.*
+!.env.example
+
+# Local dev data — never ship the developer's SQLite database
+database/database.sqlite
+
+# Build artifacts & caches
+public/build
+public/hot
+public/storage
+.phpunit.result.cache
+.phpunit.cache
+auth.json
+npm-debug.log
+yarn-error.log
+
+# Logs
+storage/logs/*.log
+storage/pail
