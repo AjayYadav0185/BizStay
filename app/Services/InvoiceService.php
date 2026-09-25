@@ -106,13 +106,7 @@ final class InvoiceService
 
             $invoice->fill([
                 'billing_cycle_end' => $cycleEnd->toDateString(),
-                'rent_amount' => $this->proration->proratedRent(
-                    (float) $locked->monthly_rent,
-                    $cycleStart,
-                    $cycleEnd,
-                    $occupancyStart,
-                    $occupancyEnd,
-                ),
+                'rent_amount' => $this->rentFor($locked, $cycleStart, $cycleEnd, $occupancyStart, $occupancyEnd),
                 'utility_amount' => $utilityAmount,
                 'maintenance_charges' => $this->proration->proratedMaintenance(
                     $cycleStart,
@@ -122,6 +116,8 @@ final class InvoiceService
                 ),
                 'food_deduction' => $this->proration->mealDeduction($locked, $cycleStart, $cycleEnd),
                 'other_charges' => $otherCharges,
+                'gst_percent' => $this->gstPercentFor($locked),
+                'gst_amount' => $this->gstAmountFor($locked, $cycleStart, $cycleEnd, $occupancyStart, $occupancyEnd),
                 // Each invoice stands alone: arrears stay on their own rows and
                 // are surfaced via Booking::outstandingDues()/InvoiceService::arrearsFor(),
                 // so a cycle is never double-counted in the ledger.
@@ -142,6 +138,52 @@ final class InvoiceService
 
             return $invoice->refresh();
         });
+    }
+
+    /**
+     * Rent for one cycle. PG stays prorate the frozen monthly rent;
+     * hotel stays bill nightly_rate × actually occupied nights in the window
+     * (Gurgaon hotels sell rooms, not beds — food/maintenance stay 0 there).
+     */
+    public function rentFor(Booking $booking, Carbon $cycleStart, Carbon $cycleEnd, Carbon $occupancyStart, Carbon $occupancyEnd): float
+    {
+        if (($booking->stay_type ?? 'pg') === 'hotel') {
+            $nights = max(0, $occupancyStart->diffInDays($occupancyEnd) + 1);
+            $rate = (float) ($booking->nightly_rate ?? 0) ?: (float) ($booking->bed?->room?->nightly_rate ?? 0);
+
+            return round($nights * $rate, 2);
+        }
+
+        return $this->proration->proratedRent(
+            (float) $booking->monthly_rent,
+            $cycleStart,
+            $cycleEnd,
+            $occupancyStart,
+            $occupancyEnd,
+        );
+    }
+
+    /** Hotel GST slab on the room tariff (0% for PG monthly rent). */
+    public function gstPercentFor(Booking $booking): float
+    {
+        if (($booking->stay_type ?? 'pg') !== 'hotel') {
+            return 0.0;
+        }
+
+        $rate = (float) ($booking->nightly_rate ?? 0) ?: (float) ($booking->bed?->room?->nightly_rate ?? 0);
+
+        return \App\Support\Gurgaon::hotelGstPercent($rate);
+    }
+
+    public function gstAmountFor(Booking $booking, Carbon $cycleStart, Carbon $cycleEnd, Carbon $occupancyStart, Carbon $occupancyEnd): float
+    {
+        $percent = $this->gstPercentFor($booking);
+
+        if ($percent <= 0) {
+            return 0.0;
+        }
+
+        return round($this->rentFor($booking, $cycleStart, $cycleEnd, $occupancyStart, $occupancyEnd) * $percent / 100, 2);
     }
 
     /**

@@ -79,6 +79,11 @@ final class BedAllocationService
                 ? round((float) $terms['monthly_rent'], 2)
                 : $bed->effectiveRent();
 
+            $stayType = (string) ($terms['stay_type'] ?? 'pg');
+            $nightly = isset($terms['nightly_rate']) && $terms['nightly_rate'] !== null
+                ? round((float) $terms['nightly_rate'], 2)
+                : (float) ($bed->room?->nightly_rate ?? 0);
+
             $booking = Booking::query()->create([
                 'guest_id' => $lockedGuest->id,
                 'bed_id' => $bed->id,
@@ -87,6 +92,9 @@ final class BedAllocationService
                     ? Carbon::parse($terms['expected_check_out_date'])->toDateString()
                     : null,
                 'monthly_rent' => $rent,
+                'stay_type' => in_array($stayType, ['pg', 'hotel'], true) ? $stayType : 'pg',
+                'nightly_rate' => $nightly > 0 ? $nightly : null,
+                'guests_count' => max(1, (int) ($terms['guests_count'] ?? 1)),
                 'security_deposit_amount' => $this->resolveDeposit($terms, $rent),
                 'rent_due_day' => (int) ($terms['rent_due_day'] ?? 5),
                 'food_included' => (bool) ($terms['food_included'] ?? true),

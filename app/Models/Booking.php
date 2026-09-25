@@ -48,7 +48,8 @@ class Booking extends Model
 
     protected $fillable = [
         'guest_id', 'bed_id', 'check_in_date', 'expected_check_out_date',
-        'actual_check_out_date', 'monthly_rent', 'security_deposit_amount',
+        'actual_check_out_date', 'monthly_rent', 'nightly_rate', 'guests_count', 'stay_type',
+        'security_deposit_amount',
         'deposit_refunded_amount', 'rent_due_day', 'food_included',
         'notice_served_on', 'status', 'checked_out_at', 'checkout_settlement', 'notes',
         'assigned_marketer', 'converted_inquiry_id',
@@ -70,6 +71,8 @@ class Booking extends Model
             'food_included' => 'boolean',
             'rent_due_day' => 'integer',
             'monthly_rent' => 'decimal:2',
+            'nightly_rate' => 'decimal:2',
+            'guests_count' => 'integer',
             'security_deposit_amount' => 'decimal:2',
             'deposit_refunded_amount' => 'decimal:2',
         ];
@@ -137,6 +140,28 @@ class Booking extends Model
     public function isLive(): bool
     {
         return $this->status->occupiesBed();
+    }
+
+    public function isHotelStay(): bool
+    {
+        return ($this->stay_type ?? 'pg') === 'hotel';
+    }
+
+    /** Nights between check-in and expected/actual check-out (hotel stays). */
+    public function nightsCount(): int
+    {
+        $end = $this->actual_check_out_date ?? $this->expected_check_out_date ?? $this->check_in_date;
+
+        return max(1, $this->check_in_date->diffInDays($end) ?: 1);
+    }
+
+    public function effectiveNightlyRate(): float
+    {
+        if ((float) ($this->nightly_rate ?? 0) > 0) {
+            return (float) $this->nightly_rate;
+        }
+
+        return (float) ($this->bed?->room?->nightly_rate ?? 0);
     }
 
     public function isOnNotice(): bool

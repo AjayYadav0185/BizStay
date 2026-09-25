@@ -42,7 +42,7 @@ class Invoice extends Model
     protected $fillable = [
         'invoice_number', 'booking_id', 'billing_cycle_start', 'billing_cycle_end',
         'rent_amount', 'utility_amount', 'maintenance_charges', 'food_deduction',
-        'other_charges', 'previous_balance', 'total_due', 'amount_paid',
+        'other_charges', 'gst_percent', 'gst_amount', 'previous_balance', 'total_due', 'amount_paid',
         'due_date', 'status', 'is_checkout_settlement', 'generated_at', 'paid_at', 'notes',
         'late_fee_charged_on', 'last_reminded_at',
     ];
@@ -62,6 +62,8 @@ class Invoice extends Model
             'is_checkout_settlement' => 'boolean',
             'late_fee_charged_on' => 'date',
             'last_reminded_at' => 'date',
+            'gst_percent' => 'decimal:2',
+            'gst_amount' => 'decimal:2',
             'rent_amount' => 'decimal:2',
             'utility_amount' => 'decimal:2',
             'maintenance_charges' => 'decimal:2',
@@ -116,6 +118,7 @@ class Invoice extends Model
     /**
      * Sum of the charge components minus credits. Kept static so the observer,
      * the invoice service and tests all compute identical numbers.
+     * GST is stored as its own line (gst_amount) for the hotel slab.
      */
     public static function composeTotal(
         float $rent,
@@ -124,9 +127,10 @@ class Invoice extends Model
         float $foodDeduction,
         float $otherCharges,
         float $previousBalance,
+        float $gstAmount = 0.0,
     ): float {
         return round(
-            $rent + $utility + $maintenance + $otherCharges + $previousBalance - $foodDeduction,
+            $rent + $utility + $maintenance + $otherCharges + $gstAmount + $previousBalance - $foodDeduction,
             2,
         );
     }

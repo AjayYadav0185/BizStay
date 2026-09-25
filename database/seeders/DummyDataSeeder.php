@@ -89,12 +89,16 @@ class DummyDataSeeder extends Seeder
             ['code' => 'BSH-44'],
             [
                 'name' => 'BizStay Homes — Sector 44',
-                'type' => 'colive',
+                'type' => 'pg_hotel',
                 'address' => 'Plot 12, Huda Staff Colony',
                 'locality' => 'Sector 44',
-                'city' => 'Gurgaon',
+                'city' => 'Gurugram',
                 'state' => 'Haryana',
                 'pincode' => '122003',
+                'gstin' => '06BIZST4401A1Z5',
+                'upi_id' => 'bizstay44@okhdfc',
+                'check_in_time' => '12:00',
+                'check_out_time' => '11:00',
                 'manager_name' => 'Rakesh Dutta',
                 'contact_phone' => '9999900001',
                 'contact_email' => 'manager@bizstay.local',
@@ -116,12 +120,12 @@ class DummyDataSeeder extends Seeder
     private function seedRoomsAndMeters(): \Illuminate\Support\Collection
     {
         $plan = [
-            ['floor' => 0, 'number' => '101', 'sharing' => SharingType::Double, 'rent' => 7500.00, 'ac' => false],
-            ['floor' => 0, 'number' => '102', 'sharing' => SharingType::Triple, 'rent' => 7000.00, 'ac' => false],
-            ['floor' => 1, 'number' => '201', 'sharing' => SharingType::Double, 'rent' => 8500.00, 'ac' => true],
-            ['floor' => 1, 'number' => '202', 'sharing' => SharingType::Triple, 'rent' => 8000.00, 'ac' => true],
-            ['floor' => 2, 'number' => '301', 'sharing' => SharingType::Single, 'rent' => 12000.00, 'ac' => true],
-            ['floor' => 2, 'number' => '302', 'sharing' => SharingType::Triple, 'rent' => 8500.00, 'ac' => true],
+            ['floor' => 0, 'number' => '101', 'sharing' => SharingType::Double, 'rent' => 9500.00, 'nightly' => 1499.00, 'ac' => false],
+            ['floor' => 0, 'number' => '102', 'sharing' => SharingType::Triple, 'rent' => 8000.00, 'nightly' => 1299.00, 'ac' => false],
+            ['floor' => 1, 'number' => '201', 'sharing' => SharingType::Double, 'rent' => 11000.00, 'nightly' => 1799.00, 'ac' => true],
+            ['floor' => 1, 'number' => '202', 'sharing' => SharingType::Triple, 'rent' => 9000.00, 'nightly' => 1599.00, 'ac' => true],
+            ['floor' => 2, 'number' => '301', 'sharing' => SharingType::Single, 'rent' => 18000.00, 'nightly' => 2499.00, 'ac' => true],
+            ['floor' => 2, 'number' => '302', 'sharing' => SharingType::Triple, 'rent' => 9500.00, 'nightly' => 1699.00, 'ac' => true],
         ];
 
         $rooms = collect();
@@ -134,6 +138,7 @@ class DummyDataSeeder extends Seeder
                     'floor_no' => $entry['floor'],
                     'sharing_type' => $entry['sharing']->value,
                     'base_rent_per_bed' => $entry['rent'],
+                    'nightly_rate' => $entry['nightly'],
                     'security_deposit_default' => 1,
                     'has_ac' => $entry['ac'],
                     'attached_bathroom' => true,
@@ -187,17 +192,17 @@ class DummyDataSeeder extends Seeder
             : today();
 
         $profiles = [
-            ['name' => 'Vikram Malhotra', 'phone' => '9876500101', 'kyc' => KycStatus::Verified, 'occupation' => 'Software Engineer', 'company' => 'Zomato', 'city' => 'Delhi', 'aadhaar' => '432187650011'],
-            ['name' => 'Arjun Mehta', 'phone' => '9876500102', 'kyc' => KycStatus::Verified, 'occupation' => 'Data Analyst', 'company' => 'MakeMyTrip', 'city' => 'Jaipur', 'aadhaar' => '432187650012'],
-            ['name' => 'Karan Bhatia', 'phone' => '9876500103', 'kyc' => KycStatus::Verified, 'occupation' => 'Sales Executive', 'company' => 'HDFC Bank', 'city' => 'Ludhiana', 'aadhaar' => '432187650013'],
-            ['name' => 'Rahul Khanna', 'phone' => '9876500104', 'kyc' => KycStatus::Verified, 'occupation' => 'UX Designer', 'company' => 'Swiggy', 'city' => 'Mumbai', 'aadhaar' => '432187650014'],
-            ['name' => 'Aditya Rane', 'phone' => '9876500105', 'kyc' => KycStatus::Verified, 'occupation' => 'Consultant', 'company' => 'Deloitte', 'city' => 'Pune', 'aadhaar' => '432187650015'],
-            ['name' => 'Mohit Chauhan', 'phone' => '9876500106', 'kyc' => KycStatus::Verified, 'occupation' => 'Chartered Accountant', 'company' => 'Self-employed', 'city' => 'Dehradun', 'aadhaar' => '432187650016'],
-            ['name' => 'Sanjay Iyer', 'phone' => '9876500107', 'kyc' => KycStatus::Verified, 'occupation' => 'Product Manager', 'company' => 'Paytm', 'city' => 'Chennai', 'aadhaar' => '432187650017'],
-            ['name' => 'Deepak Yadav', 'phone' => '9876500108', 'kyc' => KycStatus::Verified, 'occupation' => 'QA Engineer', 'company' => 'Info Edge', 'city' => 'Noida', 'aadhaar' => '432187650018'],
-            ['name' => 'Nikhil Bansal', 'phone' => '9876500109', 'kyc' => KycStatus::Verified, 'occupation' => 'Marketing Lead', 'company' => 'Wakefit', 'city' => 'Bengaluru', 'aadhaar' => '432187650019'],
-            ['name' => 'Harsh Vardhan', 'phone' => '9876500110', 'kyc' => KycStatus::Verified, 'occupation' => 'Doctor (Resident)', 'company' => 'Medanta', 'city' => 'Lucknow', 'aadhaar' => '432187650020'],
-            ['name' => 'Ravi Tiwari', 'phone' => '9876500111', 'kyc' => KycStatus::Pending, 'occupation' => 'Intern', 'company' => "Byju's", 'city' => 'Varanasi', 'aadhaar' => '432187650021'],
+            ['name' => 'Vikram Malhotra', 'phone' => '9876500101', 'kyc' => KycStatus::Verified, 'occupation' => 'Software Engineer', 'company' => 'Gurgaon — Cyber City', 'city' => 'Delhi', 'aadhaar' => '432187650011'],
+            ['name' => 'Arjun Mehta', 'phone' => '9876500102', 'kyc' => KycStatus::Verified, 'occupation' => 'Data Analyst', 'company' => 'Gurgaon — Golf Course Road', 'city' => 'Jaipur', 'aadhaar' => '432187650012'],
+            ['name' => 'Karan Bhatia', 'phone' => '9876500103', 'kyc' => KycStatus::Verified, 'occupation' => 'Sales Executive', 'company' => 'HDFC Bank, MG Road', 'city' => 'Ludhiana', 'aadhaar' => '432187650013'],
+            ['name' => 'Rahul Khanna', 'phone' => '9876500104', 'kyc' => KycStatus::Verified, 'occupation' => 'UX Designer', 'company' => 'Gurgaon — Sohna Road', 'city' => 'Mumbai', 'aadhaar' => '432187650014'],
+            ['name' => 'Aditya Rane', 'phone' => '9876500105', 'kyc' => KycStatus::Verified, 'occupation' => 'Consultant', 'company' => 'Deloitte, Cyber Hub', 'city' => 'Pune', 'aadhaar' => '432187650015'],
+            ['name' => 'Mohit Chauhan', 'phone' => '9876500106', 'kyc' => KycStatus::Verified, 'occupation' => 'Chartered Accountant', 'company' => 'Self-employed, Sec 56', 'city' => 'Dehradun', 'aadhaar' => '432187650016'],
+            ['name' => 'Sanjay Iyer', 'phone' => '9876500107', 'kyc' => KycStatus::Verified, 'occupation' => 'Product Manager', 'company' => 'Gurgaon — Udyog Vihar', 'city' => 'Chennai', 'aadhaar' => '432187650017'],
+            ['name' => 'Deepak Yadav', 'phone' => '9876500108', 'kyc' => KycStatus::Verified, 'occupation' => 'QA Engineer', 'company' => 'Gurgaon — Cyber City', 'city' => 'Noida', 'aadhaar' => '432187650018'],
+            ['name' => 'Nikhil Bansal', 'phone' => '9876500109', 'kyc' => KycStatus::Verified, 'occupation' => 'Marketing Lead', 'company' => 'Gurgaon — MG Road', 'city' => 'Bengaluru', 'aadhaar' => '432187650019'],
+            ['name' => 'Harsh Vardhan', 'phone' => '9876500110', 'kyc' => KycStatus::Verified, 'occupation' => 'Doctor (Resident)', 'company' => 'Medanta, Sec 38', 'city' => 'Lucknow', 'aadhaar' => '432187650020'],
+            ['name' => 'Ravi Tiwari', 'phone' => '9876500111', 'kyc' => KycStatus::Pending, 'occupation' => 'Intern', 'company' => 'Gurgaon — DLF Phase 3', 'city' => 'Varanasi', 'aadhaar' => '432187650021'],
             ['name' => 'Amit Dubey', 'phone' => '9876500112', 'kyc' => KycStatus::Verified, 'occupation' => 'Trainer', 'company' => 'NIIT', 'city' => 'Kanpur', 'aadhaar' => '432187650022'],
         ];
 
@@ -472,11 +477,11 @@ class DummyDataSeeder extends Seeder
     private function seedInquiries(User $admin): void
     {
         $rows = [
-            ['name' => 'Tushar Sethi', 'phone' => '9811100201', 'source' => 'walk_in', 'budget' => 8500.00, 'status' => InquiryStatus::New, 'follow_up' => now()->addDays(1)],
-            ['name' => 'Manish Aggarwal', 'phone' => '9811100202', 'source' => '99acres', 'budget' => 9000.00, 'status' => InquiryStatus::Contacted, 'follow_up' => now()->addDays(2)],
-            ['name' => 'Pranav Kohli', 'phone' => '9811100203', 'source' => 'facebook', 'budget' => 12000.00, 'status' => InquiryStatus::Visited, 'follow_up' => now()->addDays(3)],
-            ['name' => 'Saurabh Jain', 'phone' => '9811100204', 'source' => 'referral', 'budget' => 7500.00, 'status' => InquiryStatus::Converted, 'follow_up' => null],
-            ['name' => 'Ritesh Malviya', 'phone' => '9811100205', 'source' => 'nobroker', 'budget' => 8000.00, 'status' => InquiryStatus::Cancelled, 'follow_up' => null],
+            ['name' => 'Tushar Sethi', 'phone' => '9811100201', 'source' => 'walk_in', 'budget' => 9500.00, 'status' => InquiryStatus::New, 'follow_up' => now()->addDays(1)],
+            ['name' => 'Manish Aggarwal', 'phone' => '9811100202', 'source' => '99acres', 'budget' => 11000.00, 'status' => InquiryStatus::Contacted, 'follow_up' => now()->addDays(2)],
+            ['name' => 'Pranav Kohli', 'phone' => '9811100203', 'source' => 'nobroker', 'budget' => 18000.00, 'status' => InquiryStatus::Visited, 'follow_up' => now()->addDays(3)],
+            ['name' => 'Saurabh Jain', 'phone' => '9811100204', 'source' => 'referral', 'budget' => 8000.00, 'status' => InquiryStatus::Converted, 'follow_up' => null],
+            ['name' => 'Ritesh Malviya', 'phone' => '9811100205', 'source' => 'magicbricks', 'budget' => 9000.00, 'status' => InquiryStatus::Cancelled, 'follow_up' => null],
         ];
 
         foreach ($rows as $row) {

@@ -30,6 +30,8 @@ class InvoiceFactory extends Factory
             'maintenance_charges' => 0,
             'food_deduction' => 0,
             'other_charges' => 0,
+            'gst_percent' => 0,
+            'gst_amount' => 0,
             'previous_balance' => 0,
             'total_due' => 8500,
             'amount_paid' => 0,

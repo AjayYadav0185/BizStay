@@ -50,7 +50,8 @@ class PropertyResource extends Resource
                         Forms\Components\Select::make('type')
                             ->options(PropertyType::class)
                             ->default(PropertyType::CoLive->value)
-                            ->required(),
+                            ->required()
+                            ->helperText('PG + Hotel enables nightly-rate stays with GST slabs'),
                         Forms\Components\TextInput::make('total_floors')
                             ->numeric()
                             ->minValue(1)
@@ -64,10 +65,20 @@ class PropertyResource extends Resource
                 Forms\Components\Section::make('Location')->schema([
                     Forms\Components\Grid::make(2)->schema([
                         Forms\Components\Textarea::make('address')->required()->rows(2)->columnSpanFull(),
-                        Forms\Components\TextInput::make('locality'),
-                        Forms\Components\TextInput::make('city')->required()->default('Gurgaon'),
+                        Forms\Components\Select::make('locality')
+                            ->options(\App\Support\Gurgaon::localityOptions())
+                            ->searchable()
+                            ->placeholder('Sector 44, DLF Phase 3, Golf Course Road…'),
+                        Forms\Components\TextInput::make('city')->required()->default('Gurugram'),
                         Forms\Components\TextInput::make('state')->required()->default('Haryana'),
-                        Forms\Components\TextInput::make('pincode')->numeric()->length(6),
+                        Forms\Components\TextInput::make('pincode')->numeric()->length(6)->placeholder('122003'),
+                        Forms\Components\TextInput::make('gstin')->label('GSTIN')->maxLength(20)->placeholder('06ABCDE1234F1Z5'),
+                        Forms\Components\TextInput::make('upi_id')->label('UPI ID (printed on invoice)')->placeholder('bizstay@okhdfc')->columnSpanFull(),
+                        Forms\Components\TextInput::make('contact_email')->email(),
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\TextInput::make('check_in_time')->default('12:00')->placeholder('12:00'),
+                            Forms\Components\TextInput::make('check_out_time')->default('11:00')->placeholder('11:00'),
+                        ])->columnSpanFull(),
                     ]),
                 ]),
 
@@ -103,7 +114,8 @@ class PropertyResource extends Resource
                                 ->prefix('₹')
                                 ->suffix('/ kWh')
                                 ->default(9)
-                                ->required(),
+                                ->required()
+                                ->helperText('DHBVN-recovered rate for Gurgaon'),
                             Forms\Components\TextInput::make('water_rate_per_unit')
                                 ->label('Water rate')
                                 ->numeric()

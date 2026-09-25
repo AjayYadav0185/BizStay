@@ -33,7 +33,7 @@ class InquiryResource extends Resource
                     Forms\Components\TextInput::make('phone')->required()->tel()->maxLength(20),
                     Forms\Components\TextInput::make('email')->email()->maxLength(255),
                     Forms\Components\Select::make('gender')->options(['male' => 'Male', 'female' => 'Female', 'other' => 'Other'])->default('male'),
-                    Forms\Components\Select::make('source')->options(['walk_in' => 'Walk-in', 'phone' => 'Phone', 'website' => 'Website', 'referral' => 'Referral', 'portal' => 'Portal', 'other' => 'Other'])->default('walk_in'),
+                    Forms\Components\Select::make('source')->options(\App\Support\Gurgaon::inquirySources())->default('walk_in'),
                     Forms\Components\TextInput::make('budget')->numeric()->prefix('₹')->minValue(0),
                     Forms\Components\TextInput::make('interested_in')->label('Interested in')->columnSpan(2),
                     Forms\Components\DatePicker::make('preferred_move_in')->native(false),
@@ -78,6 +78,9 @@ class InquiryResource extends Resource
                             Forms\Components\Toggle::make('verify_kyc')->label('ID seen & KYC verified')->default(true)->helperText('Tick only if the original ID was physically verified at the desk.'),
                         ])->columns(2)->collapsible(),
                         Forms\Components\Section::make('Stay terms')->schema([
+                            Forms\Components\Select::make('stay_type')->options(['pg' => 'PG (monthly)', 'hotel' => 'Hotel (nightly + GST)'])->default('pg')->required()->live(),
+                            Forms\Components\TextInput::make('nightly_rate')->numeric()->prefix('₹')->suffix('/ night')->visible(fn (Forms\Get $get): bool => $get('stay_type') === 'hotel'),
+                            Forms\Components\TextInput::make('guests_count')->numeric()->minValue(1)->maxValue(6)->default(1)->visible(fn (Forms\Get $get): bool => $get('stay_type') === 'hotel'),
                             Forms\Components\Select::make('bed_id')
                                 ->label('Bed')
                                 ->options(fn (): array => app(InquiryConversionService::class)->allocatableBedOptions())

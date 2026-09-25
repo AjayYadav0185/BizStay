@@ -27,6 +27,7 @@ final class InvoiceObserver
             (float) $invoice->food_deduction,
             (float) $invoice->other_charges,
             (float) $invoice->previous_balance,
+            (float) ($invoice->gst_amount ?? 0),
         );
 
         $invoice->generated_at ??= now();

@@ -37,6 +37,8 @@
         <div class="brand">{{ $property?->name ?? 'BizStay PG' }}</div>
         <div class="muted">{{ $property?->full_address }}</div>
         <div class="muted">{{ $property?->contact_phone }} · {{ $property?->contact_email }}</div>
+        @if ($property?->gstin)<div class="muted">GSTIN: {{ $property->gstin }}</div>@endif
+        @if ($property?->upi_id)<div class="muted">UPI: {{ $property->upi_id }}</div>@endif
     </div>
     <div style="text-align:right">
         <h1>TAX INVOICE</h1>
@@ -64,7 +66,7 @@
         <tr><th>Description</th><th class="num">Amount</th></tr>
     </thead>
     <tbody>
-        <tr><td>Rent ({{ $invoice->billing_cycle_start->format('M Y') }})</td><td class="num">₹{{ number_format((float) $invoice->rent_amount, 2) }}</td></tr>
+        <tr><td>Rent ({{ $invoice->billing_cycle_start->format('M Y') }}){{ $invoice->booking?->stay_type === 'hotel' ? ' · ' . $invoice->booking?->nightsCount() . ' night(s)' : '' }}</td><td class="num">₹{{ number_format((float) $invoice->rent_amount, 2) }}</td></tr>
         @if ((float) $invoice->utility_amount > 0)
         <tr><td>Utility charges (metered)</td><td class="num">₹{{ number_format((float) $invoice->utility_amount, 2) }}</td></tr>
         @endif
@@ -73,6 +75,9 @@
         @endif
         @if ((float) $invoice->other_charges != 0.0)
         <tr><td>Other charges</td><td class="num">₹{{ number_format((float) $invoice->other_charges, 2) }}</td></tr>
+        @endif
+        @if ((float) ($invoice->gst_amount ?? 0) > 0)
+        <tr><td>GST @ {{ number_format((float) $invoice->gst_percent, 2) }}%</td><td class="num">₹{{ number_format((float) $invoice->gst_amount, 2) }}</td></tr>
         @endif
         @if ($invoice->is_checkout_settlement)
         <tr><td class="muted">Check-out settlement invoice</td><td></td></tr>

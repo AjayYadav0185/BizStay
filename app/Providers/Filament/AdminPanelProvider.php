@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Widgets\DueInvoicesTable;
 use App\Filament\Widgets\OccupancyByFloorChart;
@@ -25,8 +26,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
-            ->brandName('BizStay PG')
+            ->login(Login::class)
+            ->brandName('BizStay PG · Gurugram')
             ->colors([
                 'primary' => '#f43f5e',  // Warm Rose Coral - unique accent
                 'secondary' => '#486581', // Deep Slate Blue

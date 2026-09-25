@@ -37,6 +37,8 @@ class InvoiceResource extends Resource
                     Forms\Components\TextInput::make('maintenance_charges')->numeric()->prefix('₹'),
                     Forms\Components\TextInput::make('food_deduction')->numeric()->prefix('₹'),
                     Forms\Components\TextInput::make('other_charges')->numeric()->prefix('₹'),
+                    Forms\Components\TextInput::make('gst_percent')->label('GST %')->numeric()->suffix('%')->helperText('Hotel: 12% ≤₹7,500/night, 18% above. PG: 0%'),
+                    Forms\Components\TextInput::make('gst_amount')->label('GST amount')->numeric()->prefix('₹'),
                     Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
                 ]),
             ]),

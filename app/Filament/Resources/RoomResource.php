@@ -69,7 +69,15 @@ class RoomResource extends Resource
                             ->numeric()
                             ->prefix('₹')
                             ->required()
-                            ->minValue(0),
+                            ->minValue(0)
+                            ->helperText('Gurgaon PG: single ~₹18k · double ~₹10k · triple ~₹8k'),
+                        Forms\Components\TextInput::make('nightly_rate')
+                            ->label('Nightly rate (hotel)')
+                            ->numeric()
+                            ->prefix('₹')
+                            ->suffix('/ night')
+                            ->minValue(0)
+                            ->helperText('Only for PG + Hotel properties. ≤₹7,500 → 12% GST, above → 18%'),
                         Forms\Components\TextInput::make('security_deposit_default')
                             ->label('Deposit (months)')
                             ->numeric()

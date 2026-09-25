@@ -36,7 +36,8 @@ class Property extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'code', 'type', 'address', 'locality', 'city', 'state', 'pincode',
+        'name', 'code', 'type', 'address', 'locality', 'city', 'state', 'pincode', 'gstin', 'upi_id',
+        'check_in_time', 'check_out_time',
         'manager_name', 'contact_phone', 'contact_email', 'total_floors', 'amenities',
         'security_deposit_months', 'notice_period_days', 'billing_cycle_start_day',
         'electricity_rate_per_unit', 'water_rate_per_unit', 'meal_charge_per_day',

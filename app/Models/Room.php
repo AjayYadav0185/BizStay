@@ -36,7 +36,7 @@ class Room extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'floor_no', 'room_number', 'sharing_type', 'base_rent_per_bed',
+        'floor_no', 'room_number', 'sharing_type', 'base_rent_per_bed', 'nightly_rate',
         'security_deposit_default', 'has_ac', 'attached_bathroom', 'has_balcony',
         'status', 'notes',
     ];
@@ -54,6 +54,7 @@ class Room extends Model
             'has_balcony' => 'boolean',
             'floor_no' => 'integer',
             'base_rent_per_bed' => 'decimal:2',
+            'nightly_rate' => 'decimal:2',
             'security_deposit_default' => 'integer',
         ];
     }
