@@ -17,11 +17,17 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::query()->firstOrCreate(
-            ['email' => 'admin@bizstay.local'],
-            ['name' => 'BizStay Admin', 'password' => 'password']
-        );
-
+        $staff = [
+            ['email' => 'admin@bizstay.local', 'name' => 'BizStay Admin', 'role' => 'manager'],
+            ['email' => 'manager@bizstay.local', 'name' => 'Rakesh Dutta (Property Manager)', 'role' => 'manager'],
+            ['email' => 'warden@bizstay.local', 'name' => 'Suresh Nair (Night Warden)', 'role' => 'manager'],
+        ];
+        foreach ($staff as $row) {
+            User::query()->firstOrCreate(
+                ['email' => $row['email']],
+                ['name' => $row['name'], 'password' => 'password', 'role' => $row['role']]
+            );
+        }
         $property = Property::query()->first();
         if (! $property) {
             $property = Property::factory()->create();
@@ -60,14 +66,26 @@ class DemoSeeder extends Seeder
                 'kyc_status' => KycStatus::Verified->value,
             ]);
             if (\App\Models\Booking::query()->where('guest_id', $guest->id)->live()->exists()) {
-                continue;
+                // still make sure a tenant login exists for the app demo
+            } else {
+                $alloc->allocate($guest, $beds[$i]->id, [
+                    'check_in_date' => now()->subDays(10 + $i)->toDateString(),
+                    'monthly_rent' => (float) $beds[$i]->effectiveRent(),
+                ]);
             }
-            $alloc->allocate($guest, $beds[$i]->id, [
-                'check_in_date' => now()->subDays(10 + $i)->toDateString(),
-                'monthly_rent' => (float) $beds[$i]->effectiveRent(),
-            ]);
+
+            // Tenant login for the Flutter app: phone number + "password".
+            User::query()->firstOrCreate(
+                ['guest_id' => $guest->id],
+                [
+                    'name' => $guest->full_name,
+                    'email' => $guest->phone.'@tenant.bizstay.local',
+                    'password' => 'password',
+                    'role' => 'tenant',
+                ]
+            );
         }
 
-        $this->command?->info('Demo seed: admin@bizstay.local / password, '.count($rooms).' rooms ready.');
+        $this->command?->info('Demo seed: manager admin@bizstay.local / password, tenant login 9810000001 / password, '.count($rooms).' rooms ready.');
     }
 }

@@ -10,6 +10,7 @@ use App\Enums\PropertyType;
 use App\Services\InvoiceService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * The single PG building. Exactly one active row is expected; all billing
