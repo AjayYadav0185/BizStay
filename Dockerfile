@@ -3,23 +3,33 @@ FROM node:22-alpine AS frontend
 
 WORKDIR /app
 
-# Node dependencies (only re-run when the lockfile changes; npm ci is
-# deterministic — installs exactly what package-lock.json pins)
-COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+# package-lock.json may not exist in the repo (npm registry was unreachable
+# when it was last generated locally). Prefer a deterministic `npm ci` when
+# the lockfile is present, otherwise fall back to `npm install`.
+COPY package.json ./
+COPY package-lock.json* ./
+RUN if [ -f package-lock.json ]; then \
+        npm ci --no-audit --no-fund; \
+    else \
+        npm install --no-audit --no-fund; \
+    fi
 
 # Source files required by Vite/Tailwind (public/build is excluded from the
-# build context via .dockerignore, so this always produces a fresh build)
+# build context via .dockerignore, so this always produces a fresh build).
+# NOTE: this project keeps its Tailwind/PostCSS config inside vite.config.js
+# + CSS (`@import "tailwindcss"`), so no tailwind.config.js / postcss.config.js
+# files are copied here — they do not exist in the repo.
 COPY resources/ ./resources/
-COPY vite.config.js tailwind.config.js postcss.config.js ./
+COPY vite.config.js ./
 
 RUN npm run build
 
 # ============ Stage 2: PHP application image =================================
 FROM php:8.3-cli
 
-# 1. System dependencies + PHP extensions (including pdo_pgsql so the app
-#    can be switched to Render PostgreSQL by setting DB_CONNECTION=pgsql)
+# 1. System dependencies + PHP extensions (pdo_sqlite for the default
+#    SQLite-on-disk setup; pdo_pgsql kept so the app can later move to
+#    Render PostgreSQL by setting DB_CONNECTION=pgsql + DB_* vars)
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -41,6 +51,7 @@ RUN apt-get update && apt-get install -y \
         zip \
         gd \
         opcache \
+        pcntl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 2. PHP production settings (opcache + upload limits)
@@ -64,10 +75,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 
 # 4. PHP dependencies (only re-run when composer files change).
-#    NOTE: fakerphp/faker is a REGULAR dependency (composer.json "require"),
-#    not require-dev, because the entrypoint seeds demo data with Eloquent
-#    factories on every boot — and Laravel's Factory always needs Faker.
-#    Installing with --no-dev used to throw: Class "Faker\Factory" not found.
+#    DemoSeeder deliberately avoids Eloquent factories, so `--no-dev` vendor
+#    (no fakerphp/faker) is safe for seeding on Render.
 COPY composer.json composer.lock ./
 RUN composer install \
         --no-dev \
@@ -82,8 +91,13 @@ COPY --from=frontend /app/public/build ./public/build
 # 6. Application source (vendor/node_modules/etc. excluded via .dockerignore)
 COPY . .
 
-# 7. Regenerate the Laravel package manifest
-RUN php artisan package:discover --ansi
+# 7. Rebuild the Laravel package manifest for --no-dev vendor.
+#    Dev-only providers (laravel/pail, laravel/pao, collision, tinker) are
+#    absent from the image, but their stale entries linger in the manifest
+#    copied from the local repo — so wipe it first, then rediscover against
+#    the packages that actually exist in the image.
+RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
+    && php artisan package:discover --ansi
 
 # 8. Entrypoint
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh

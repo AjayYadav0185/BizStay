@@ -7,8 +7,10 @@
 node_modules
 vendor
 
-# React Native / mobile app — not part of the web deployment
-mobile
+# Flutter app — not part of the web deployment (points at the API over HTTPS)
+bizstay_app
+.dart_tool
+build
 
 # Secrets & local env files (Render injects env vars via the dashboard)
 .env
@@ -17,6 +19,10 @@ mobile
 
 # Local dev data — never ship the developer's SQLite database
 database/database.sqlite
+database/*.sqlite*
+storage/database/*.sqlite*
+storage/logs/*.log
+storage/framework/cache/data/*
 
 # Build artifacts & caches
 public/build

@@ -1,0 +1,53 @@
+# BizStay on Render — SQLite on a persistent disk (simplest, zero extra cost).
+#
+# Deploy: Render Dashboard → New → Blueprint → select this repo.
+# Render reads this file, creates the web service + disk, and injects the
+# env vars below. Set APP_KEY once (see below) and you are live.
+#
+# What you get:
+#   https://<your-service>.onrender.com/admin   (Filament panel)
+#   https://<your-service>.onrender.com/api/*   (Flutter app backend)
+#   https://<your-service>.onrender.com/up      (health check)
+services:
+  - type: web
+    name: bizstay
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /up
+    # Keep one instance: SQLite lives on the attached disk of THIS instance.
+    # (Do NOT scale to 2+ instances with SQLite — each would get its own disk
+    # and the data would split. Move to Postgres first if you need to scale.)
+    numInstances: 1
+    disk:
+      name: bizstay-data
+      mountPath: /var/www/storage
+      sizeGB: 1
+    envVars:
+      - key: APP_NAME
+        value: BizStay
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      # APP_URL is derived from RENDER_EXTERNAL_URL automatically; leave unset.
+      # Generate once locally (`php artisan key:generate --show`) and paste:
+      - key: APP_KEY
+        sync: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: warning
+      - key: DB_CONNECTION
+        value: sqlite
+      # On-disk SQLite file (lives on the persistent disk above):
+      - key: DB_DATABASE
+        value: /var/www/storage/database/database.sqlite
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: FILESYSTEM_DISK
+        value: local
