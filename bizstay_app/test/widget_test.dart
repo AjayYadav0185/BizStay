@@ -9,7 +9,7 @@ void main() {
     SharedPreferences.setMockInitialValues(const {});
     await tester.pumpWidget(const BizStayApp());
     await tester.pumpAndSettle();
-    expect(find.text('Welcome to BizStay'), findsOneWidget);
+    expect(find.text('Welcome back'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget);
   });
 

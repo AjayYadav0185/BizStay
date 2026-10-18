@@ -33,7 +33,7 @@ php artisan serve
 
 Then open **http://127.0.0.1:8000/admin**
 
-**Demo login:** `admin@bizstay.in` / `password`
+**Demo login:** `admin@mail.com` / `password`
 
 ## Using MySQL (MAMP) instead of SQLite
 

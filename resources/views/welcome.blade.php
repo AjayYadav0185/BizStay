@@ -102,7 +102,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid #f4
 <a href="#download-app" class="inline-flex items-center justify-center gap-2 bg-[#f43f5e] hover:bg-[#e11d48] transition font-extrabold px-6 py-3.5 rounded-2xl shadow-lg min-h-[48px]">Download Android App <span class="text-xs bg-white/20 rounded-full px-2 py-0.5">APK</span></a>
 <a href="/admin" class="inline-flex items-center justify-center gap-2 bg-white text-[#102a43] font-extrabold px-6 py-3.5 rounded-2xl hover:bg-slate-100 transition min-h-[48px]">Live Demo -&gt;</a>
 </div>
-<p class="mt-4 text-xs text-slate-400 break-words">Demo login: <code class="bg-white/10 rounded px-1.5 py-0.5 text-white">admin@bizstay.in / password</code> - SQLite by default, MySQL ready</p>
+<p class="mt-4 text-xs text-slate-400 break-words">Demo login: <code class="bg-white/10 rounded px-1.5 py-0.5 text-white">admin@mail.com / password</code> - SQLite by default, MySQL ready</p>
 <div class="mt-6 sm:mt-8 grid grid-cols-3 gap-2 sm:gap-3 max-w-md">
 <div class="glass rounded-2xl p-2.5 sm:p-3 text-center min-w-0"><p class="text-xl sm:text-2xl font-extrabold">3+</p><p class="text-[10px] sm:text-[11px] text-slate-300 font-semibold uppercase tracking-wide">Properties</p></div>
 <div class="glass rounded-2xl p-2.5 sm:p-3 text-center min-w-0"><p class="text-xl sm:text-2xl font-extrabold">24</p><p class="text-[10px] sm:text-[11px] text-slate-300 font-semibold uppercase tracking-wide">Beds live</p></div>
@@ -183,7 +183,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid #f4
 <p class="mt-3 text-slate-300 text-[15px] sm:text-sm leading-relaxed">PHP 8.3+ enums for all statuses. SQLite by default, one-switch to MySQL on MAMP. PHPUnit covers dashboard widgets and all 8 resource pages.</p>
 <ul class="mt-5 space-y-2 text-sm text-slate-200">
 <li>✓ migrate --seed, serve — live in minutes</li>
-<li class="break-words">✓ Admin at /admin — admin@bizstay.in / password</li>
+<li class="break-words">✓ Admin at /admin — admin@mail.com / password</li>
 <li>✓ Printable invoice / receipt view included</li>
 <li>✓ Bed service keeps status always in sync</li>
 </ul>
@@ -216,7 +216,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid #f4
 <h2 class="text-[1.65rem] leading-tight sm:text-3xl font-extrabold text-[#102a43] text-center">Questions, answered</h2>
 <div class="mt-6 sm:mt-8 space-y-3">
 <details class="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4"><summary class="font-extrabold text-[#102a43] cursor-pointer py-1">Do I need MySQL to start?</summary><p class="mt-2 text-sm text-slate-600">No. BizStay runs on SQLite with zero config. Switch to MySQL on MAMP later by setting DB_CONNECTION=mysql in .env and running migrate --seed.</p></details>
-<details class="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4"><summary class="font-extrabold text-[#102a43] cursor-pointer py-1">What is the demo login?</summary><p class="mt-2 text-sm text-slate-600 break-words">Open /admin and sign in with admin@bizstay.in / password. Demo data includes 3 properties, 10 rooms, 24 beds, 8 tenants, payments, inquiries, expenses and complaints.</p></details>
+<details class="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4"><summary class="font-extrabold text-[#102a43] cursor-pointer py-1">What is the demo login?</summary><p class="mt-2 text-sm text-slate-600 break-words">Open /admin and sign in with admin@mail.com / password. Demo data includes 3 properties, 10 rooms, 24 beds, 8 tenants, payments, inquiries, expenses and complaints.</p></details>
 <details class="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4"><summary class="font-extrabold text-[#102a43] cursor-pointer py-1">How does Convert-to-Tenant work?</summary><p class="mt-2 text-sm text-slate-600">From any inquiry, one click allocates a vacant bed, creates the tenant profile with KYC, rent and deposit, and flips bed status to occupied.</p></details>
 <details class="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4"><summary class="font-extrabold text-[#102a43] cursor-pointer py-1">Where is the Android APK?</summary><p class="mt-2 text-sm text-slate-600 break-words">Scroll to the download section below. Place your built APK at public/downloads/bizstay.apk on the server, then the button serves it directly.</p></details>
 </div>

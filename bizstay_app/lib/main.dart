@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'api_service.dart';
 import 'screens/login.dart';
-import 'widgets/biz.dart';
+import 'theme/bizstay_theme.dart';
 
 void main() {
   runApp(const BizStayApp());
@@ -40,10 +40,10 @@ class BizStayAppState extends State<BizStayApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'BizStay',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Biz.primary),
-        useMaterial3: true,
-      ),
+      debugShowCheckedModeBanner: false,
+      theme: BizStayThemeData.light(),
+      darkTheme: BizStayThemeData.dark(),
+      themeMode: ThemeMode.system,
       home: _loading
           ? const Scaffold(
               body: Center(child: CircularProgressIndicator()))
@@ -53,4 +53,5 @@ class BizStayAppState extends State<BizStayApp> {
     );
   }
 }
+
 
