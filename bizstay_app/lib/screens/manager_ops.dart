@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../api_service.dart';
+import '../theme/bizstay_colors.dart';
 import '../widgets/biz.dart';
+import '../widgets/bizstay_ui.dart';
 
 class ManagerOps extends StatefulWidget {
   const ManagerOps({super.key});
@@ -34,8 +36,14 @@ class _ManagerOpsState extends State<ManagerOps>
         _ComplaintList(),
         _LeadList(),
       ]),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          if (_tabs.index == 1) {
+            if (context.mounted) {
+              showAdminOnlySheet(context, 'Leads');
+            }
+            return;
+          }
           final ok = await showDialog<bool>(
               context: context,
               builder: (ctx) => const ComplaintDialog());
@@ -45,8 +53,10 @@ class _ManagerOpsState extends State<ManagerOps>
             setState(() {});
           }
         },
-        tooltip: 'Log complaint',
-        child: const Icon(Icons.add),
+        tooltip: 'Add',
+        icon: const Icon(Icons.add),
+        label: Text(
+            _tabs.index == 1 ? 'Add lead' : 'Log complaint'),
       ),
     );
   }
@@ -60,6 +70,7 @@ class _ComplaintList extends StatefulWidget {
 }
 
 class _ComplaintListState extends State<_ComplaintList> {
+  final _search = TextEditingController();
   late Future<Map<String, dynamic>> _future;
 
   @override
@@ -69,8 +80,36 @@ class _ComplaintListState extends State<_ComplaintList> {
   }
 
   @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  List<Map<String, dynamic>> _visible(
+      List<Map<String, dynamic>> rows) {
+    final q = _search.text.trim().toLowerCase();
+    if (q.isEmpty) return rows;
+    return rows.where((c) {
+      final hay =
+          '${c['title']} ${c['guest']} ${c['room']} ${c['status']}'
+              .toLowerCase();
+      return hay.contains(q);
+    }).toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
+    return Column(children: [
+      Padding(
+        padding:
+            const EdgeInsets.fromLTRB(12, 12, 12, 4),
+        child: SearchField(
+            controller: _search,
+            hint: 'Search complaints…',
+            onSearch: () => setState(() {})),
+      ),
+      Expanded(
+        child: FutureBuilder<Map<String, dynamic>>(
       future: _future,
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
@@ -81,9 +120,12 @@ class _ComplaintListState extends State<_ComplaintList> {
               onRetry: () =>
                   setState(() => _future = ApiService.complaints()));
         }
-        final rows = ApiService.pageItems(snap.data);
+        final rows =
+            _visible(ApiService.pageItems(snap.data));
         if (rows.isEmpty) {
-          return const Center(child: Text('No complaints.'));
+          return const EmptyState(
+              icon: Icons.handyman_outlined,
+              message: 'No complaints match.');
         }
         return RefreshIndicator(
           onRefresh: () async {
@@ -91,28 +133,38 @@ class _ComplaintListState extends State<_ComplaintList> {
             setState(() => _future = Future.value(v));
           },
           child: ListView.builder(
-            padding: const EdgeInsets.all(12),
+            padding:
+                const EdgeInsets.fromLTRB(12, 4, 12, 90),
             itemCount: rows.length,
             itemBuilder: (context, i) {
               final c = rows[i];
               final breached = c['sla_breached'] == true;
               return Card(
-                margin: const EdgeInsets.only(bottom: 8),
+                margin:
+                    const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   leading: Icon(Icons.handyman,
-                      color: Biz.statusColor('${c['status']}')),
-                  title: Text('${c['title'] ?? ''}'),
+                      color: BizStayColors.statusColor(
+                          '${c['status']}')),
+                  title:
+                      Text('${c['title'] ?? ''}'),
                   subtitle: Text(
-                      '${c['guest'] ?? '—'} • Room ${c['room'] ?? '—'}'),
+                      '${c['guest'] ?? '—'} • Room ${c['room'] ?? '—'} • ${c['created'] ?? ''}'),
                   trailing: Column(
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.end,
                       children: [
-                        Biz.chip('${c['status'] ?? ''}'),
+                        StatusChip(
+                            '${c['status'] ?? ''}'),
                         if (breached)
                           const Text('SLA breached',
                               style: TextStyle(
-                                  color: Colors.red, fontSize: 11)),
+                                  color: BizStayColors
+                                      .errorDark,
+                                  fontSize: 11,
+                                  fontWeight:
+                                      FontWeight.w700)),
                       ]),
                 ),
               );
@@ -120,7 +172,9 @@ class _ComplaintListState extends State<_ComplaintList> {
           ),
         );
       },
-    );
+        ),
+      ),
+    ]);
   }
 }
 
@@ -132,6 +186,7 @@ class _LeadList extends StatefulWidget {
 }
 
 class _LeadListState extends State<_LeadList> {
+  final _search = TextEditingController();
   late Future<Map<String, dynamic>> _future;
 
   @override
@@ -141,8 +196,24 @@ class _LeadListState extends State<_LeadList> {
   }
 
   @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
+    return Column(children: [
+      Padding(
+        padding:
+            const EdgeInsets.fromLTRB(12, 12, 12, 4),
+        child: SearchField(
+            controller: _search,
+            hint: 'Search leads…',
+            onSearch: () => setState(() {})),
+      ),
+      Expanded(
+        child: FutureBuilder<Map<String, dynamic>>(
       future: _future,
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
@@ -153,26 +224,57 @@ class _LeadListState extends State<_LeadList> {
               onRetry: () =>
                   setState(() => _future = ApiService.inquiries()));
         }
-        final rows = ApiService.pageItems(snap.data);
-        if (rows.isEmpty) return const Center(child: Text('No leads.'));
+        final q = _search.text.trim().toLowerCase();
+        final all = ApiService.pageItems(snap.data);
+        final rows = q.isEmpty
+            ? all
+            : all.where((l) {
+                final hay =
+                    '${l['name']} ${l['phone']} ${l['source']} ${l['status']}'
+                        .toLowerCase();
+                return hay.contains(q);
+              }).toList();
+        if (rows.isEmpty) {
+          return const EmptyState(
+              icon: Icons.person_add_alt_outlined,
+              message: 'No leads match.');
+        }
         return ListView.builder(
-          padding: const EdgeInsets.all(12),
+          padding:
+              const EdgeInsets.fromLTRB(12, 4, 12, 90),
           itemCount: rows.length,
           itemBuilder: (context, i) {
             final l = rows[i];
+            final overdue = l['overdue'] == true;
             return Card(
-              margin: const EdgeInsets.only(bottom: 8),
+              margin:
+                  const EdgeInsets.only(bottom: 8),
               child: ListTile(
-                leading: const CircleAvatar(child: Icon(Icons.person)),
-                title: Text('${l['name'] ?? ''} • ${l['phone'] ?? ''}'),
-                subtitle: Text('${l['source'] ?? ''} • ${l['follow_up'] ?? ''}'),
-                trailing: Biz.chip('${l['status'] ?? ''}'),
+                leading: CircleAvatar(
+                    backgroundColor:
+                        BizStayColors.navy900,
+                    child: Text(
+                        ('${l['name'] ?? '?'}')
+                            .substring(0, 1)
+                            .toUpperCase(),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight:
+                                FontWeight.w800))),
+                title: Text(
+                    '${l['name'] ?? ''} • ${l['phone'] ?? ''}'),
+                subtitle: Text(
+                    '${l['source'] ?? ''} • Follow-up ${l['follow_up'] ?? '—'}${overdue ? ' • OVERDUE' : ''}'),
+                trailing:
+                    StatusChip('${l['status'] ?? ''}'),
               ),
             );
           },
         );
       },
-    );
+        ),
+      ),
+    ]);
   }
 }
 

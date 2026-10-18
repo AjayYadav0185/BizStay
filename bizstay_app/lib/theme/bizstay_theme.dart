@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'bizstay_colors.dart';
 
-/// Premium Material 3 ThemeData for BizStay.
+/// Premium Material 3 ThemeData for BizStay (light only).
 /// Deep navy primary + warm amber accent, slate surfaces.
 abstract final class BizStayTheme {
   static const lightScheme = ColorScheme(
@@ -39,42 +39,6 @@ abstract final class BizStayTheme {
     onInverseSurface: Colors.white,
     inversePrimary: BizStayColors.gold500,
     surfaceTint: BizStayColors.navy900,
-  );
-
-  static const darkScheme = ColorScheme(
-    brightness: Brightness.dark,
-    primary: Color(0xFFF8FAFC),
-    onPrimary: BizStayColors.navy900,
-    primaryContainer: BizStayColors.navy700,
-    onPrimaryContainer: Colors.white,
-    secondary: BizStayColors.gold500,
-    onSecondary: BizStayColors.navy900,
-    secondaryContainer: Color(0xFF451A03),
-    onSecondaryContainer: BizStayColors.gold100,
-    tertiary: BizStayColors.slate300,
-    onTertiary: BizStayColors.navy900,
-    tertiaryContainer: BizStayColors.navy700,
-    onTertiaryContainer: Colors.white,
-    error: Color(0xFFF87171),
-    onError: Color(0xFF450A0A),
-    errorContainer: Color(0xFF7F1D1D),
-    onErrorContainer: Color(0xFFFECACA),
-    surface: BizStayColors.darkBg,
-    onSurface: Color(0xFFF1F5F9),
-    surfaceContainerLowest: Color(0xFF020617),
-    surfaceContainerLow: BizStayColors.darkSurface,
-    surfaceContainer: BizStayColors.darkCard,
-    surfaceContainerHigh: Color(0xFF273449),
-    surfaceContainerHighest: Color(0xFF334155),
-    onSurfaceVariant: BizStayColors.slate400,
-    outline: BizStayColors.darkBorder,
-    outlineVariant: Color(0xFF1E293B),
-    shadow: Colors.black,
-    scrim: Colors.black,
-    inverseSurface: Colors.white,
-    onInverseSurface: BizStayColors.navy900,
-    inversePrimary: BizStayColors.navy800,
-    surfaceTint: Colors.transparent,
   );
 
   static TextTheme textTheme(ColorScheme scheme) {
@@ -269,34 +233,27 @@ abstract final class BizStayThemeData {
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: BizStayColors.navy900,
       ),
-    );
-  }
-
-  static ThemeData dark() {
-    const scheme = BizStayTheme.darkScheme;
-    final base = BizStayThemeData.light();
-    return base.copyWith(
-      colorScheme: scheme,
-      textTheme: BizStayTheme.textTheme(scheme),
-      scaffoldBackgroundColor: BizStayColors.darkBg,
-      appBarTheme: base.appBarTheme.copyWith(
-        backgroundColor: BizStayColors.darkSurface,
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: BizStayColors.navy900,
+        foregroundColor: Colors.white,
+        shape: CircleBorder(),
       ),
-      cardTheme: base.cardTheme.copyWith(
-        color: BizStayColors.darkCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: BizStayColors.darkBorder),
-        ),
+      searchBarTheme: SearchBarThemeData(
+        backgroundColor: const WidgetStatePropertyAll(Colors.white),
+        elevation: const WidgetStatePropertyAll(0),
+        side: WidgetStatePropertyAll(
+            BorderSide(color: BizStayColors.slate200)),
+        shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14))),
+        hintStyle: WidgetStatePropertyAll(const TextStyle(
+            color: BizStayColors.slate400, fontSize: 14)),
       ),
-      inputDecorationTheme: base.inputDecorationTheme.copyWith(
-        fillColor: BizStayColors.darkCard,
-      ),
-      bottomSheetTheme: base.bottomSheetTheme.copyWith(
-        backgroundColor: BizStayColors.darkCard,
-      ),
-      dialogTheme: base.dialogTheme.copyWith(
-        backgroundColor: BizStayColors.darkCard,
+      tabBarTheme: const TabBarThemeData(
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white70,
+        indicatorColor: BizStayColors.gold500,
+        labelStyle: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
       ),
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api_service.dart';
-import '../widgets/biz.dart';
+import '../theme/bizstay_colors.dart';
 import 'manager_shell.dart';
 import 'tenant_shell.dart';
 
@@ -94,74 +94,109 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Biz.bg,
-      appBar: AppBar(title: const Text('BizStay'), actions: [
-        IconButton(
-            onPressed: openSettings,
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Server URL'),
-      ]),
+      backgroundColor: BizStayColors.slate100,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 96,
-                          height: 96,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF1C1133)
-                                    .withValues(alpha: 0.30),
-                                blurRadius: 18,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(24),
-                            child: Image.asset(
-                              'assets/icons/bizstay_icon_master.png',
-                              width: 96,
-                              height: 96,
-                              fit: BoxFit.cover,
-                            ),
+            constraints:
+                const BoxConstraints(maxWidth: 420),
+            child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                        gradient:
+                            const LinearGradient(
+                                begin: Alignment
+                                    .topLeft,
+                                end: Alignment
+                                    .bottomRight,
+                                colors: [
+                                  BizStayColors
+                                      .navy900,
+                                  Color(0xFF27365A)
+                                ]),
+                        borderRadius:
+                            BorderRadius.circular(
+                                24)),
+                    child: Column(children: [
+                      Container(
+                        width: 84,
+                        height: 84,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                              BorderRadius.circular(
+                                  22),
+                        ),
+                        padding:
+                            const EdgeInsets.all(
+                                8),
+                        child: ClipRRect(
+                          borderRadius:
+                              BorderRadius.circular(
+                                  14),
+                          child: Image.asset(
+                            'assets/icons/bizstay_icon_master.png',
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       const Text('BizStay',
-                          textAlign: TextAlign.center,
+                          textAlign:
+                              TextAlign.center,
                           style: TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.w800)),
-                      const Text('PG Management • Gurgaon',
-                          textAlign: TextAlign.center,
+                              fontSize: 26,
+                              fontWeight:
+                                  FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: -0.5)),
+                      const Text(
+                          'PG + HOTEL • GURGAON',
+                          textAlign:
+                              TextAlign.center,
                           style: TextStyle(
                               fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.2,
-                              color: Colors.black54)),
-                      const SizedBox(height: 6),
-                      const Text('Welcome back',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 4),
-                      const Text(
-                          'Manager: email. Resident: phone number.',
-                          textAlign: TextAlign.center,
-                          style:
-                              TextStyle(color: Colors.black54, fontSize: 13)),
-                      const SizedBox(height: 18),
+                              fontWeight:
+                                  FontWeight.w800,
+                              letterSpacing: 1.6,
+                              color:
+                                  BizStayColors
+                                      .gold500)),
+                    ]),
+                  ),
+                  const SizedBox(height: 14),
+                  Card(
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.all(20),
+                      child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment
+                                  .stretch,
+                          children: [
+                            const Text(
+                                'Welcome back',
+                                style: TextStyle(
+                                    fontSize: 19,
+                                    fontWeight:
+                                        FontWeight
+                                            .w800)),
+                            const SizedBox(
+                                height: 4),
+                            const Text(
+                                'Manager: email. Resident: phone number.',
+                                style: TextStyle(
+                                    color: BizStayColors
+                                        .slate600,
+                                    fontSize: 13)),
+                            const SizedBox(
+                                height: 16),
                       TextField(
                           controller: _login,
                           keyboardType: TextInputType.emailAddress,
@@ -186,25 +221,57 @@ class _LoginScreenState extends State<LoginScreen> {
                                       : Icons.visibility)))),
                       if (_error != null) ...[
                         const SizedBox(height: 10),
-                        Text(_error!,
-                            style: const TextStyle(color: Colors.red)),
+                        Container(
+                          padding:
+                              const EdgeInsets.all(
+                                  10),
+                          decoration: BoxDecoration(
+                              color: BizStayColors
+                                  .errorBg,
+                              borderRadius:
+                                  BorderRadius
+                                      .circular(12)),
+                          child: Text(_error!,
+                              style: const TextStyle(
+                                  color: BizStayColors
+                                      .errorDark,
+                                  fontWeight:
+                                      FontWeight
+                                          .w700)),
+                        ),
                       ],
                       const SizedBox(height: 16),
                       FilledButton(
-                          onPressed: _busy ? null : submit,
+                          onPressed:
+                              _busy ? null : submit,
                           child: Padding(
                               padding:
-                                  const EdgeInsets.symmetric(vertical: 4),
+                                  const EdgeInsets
+                                      .symmetric(
+                                          vertical:
+                                              4),
                               child: _busy
                                   ? const SizedBox(
                                       height: 20,
                                       width: 20,
                                       child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white))
-                                  : const Text('Sign in'))),
+                                          strokeWidth:
+                                              2,
+                                          color: Colors
+                                              .white))
+                                  : const Text(
+                                      'Sign in'))),
+                      TextButton.icon(
+                          onPressed: openSettings,
+                          icon: const Icon(
+                              Icons.settings_outlined,
+                              size: 16),
+                          label: const Text(
+                              'Change server URL')),
                     ]),
               ),
+            ),
+            ],
             ),
           ),
         ),

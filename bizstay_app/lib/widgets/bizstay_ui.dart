@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/bizstay_colors.dart';
 
 /// Reusable UI kit: status chips, money text, stat cards.
-/// All widgets read from ThemeData first (light/dark safe).
+/// All widgets follow the light-only premium theme.
 class StatusChip extends StatelessWidget {
   const StatusChip(this.text, {super.key, this.color});
 
@@ -224,4 +224,99 @@ class ErrorState extends StatelessWidget {
           : FilledButton(onPressed: onRetry, child: const Text('Retry')),
     );
   }
+}
+
+/// OYO-style search field used above every list.
+class SearchField extends StatelessWidget {
+  const SearchField(
+      {super.key,
+      required this.controller,
+      required this.hint,
+      required this.onSearch,
+      this.onClear});
+
+  final TextEditingController controller;
+  final String hint;
+  final VoidCallback onSearch;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      textInputAction: TextInputAction.search,
+      onSubmitted: (_) => onSearch(),
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: const Icon(Icons.search),
+        suffixIcon: controller.text.isEmpty
+            ? IconButton(
+                icon: const Icon(Icons.arrow_forward_rounded),
+                onPressed: onSearch,
+                tooltip: 'Search')
+            : IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: onClear ??
+                    () {
+                      controller.clear();
+                      onSearch();
+                    },
+                tooltip: 'Clear'),
+      ),
+    );
+  }
+}
+
+/// Small gold count pill, e.g. "12 found".
+class CountPill extends StatelessWidget {
+  const CountPill(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: BizStayColors.gold100,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: BizStayColors.gold500.withValues(alpha: 0.5)),
+      ),
+      child: Text(text,
+          style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: BizStayColors.gold600)),
+    );
+  }
+}
+
+/// Sheet explaining that master-data creation lives in the web admin
+/// (no backend POST exists for it yet — avoids dead-end buttons).
+Future<void> showAdminOnlySheet(BuildContext context, String what) {
+  return showModalBottomSheet<void>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        child: Column(mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Add $what',
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 6),
+          Text('New ${what.toLowerCase()} are created in the BizStay web '
+              'admin (/admin). The mobile API currently supports listing '
+              'and searching — a create endpoint ships with the next '
+              'backend update.',
+              style: const TextStyle(
+                  color: BizStayColors.slate600, height: 1.45)),
+          const SizedBox(height: 14),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Got it')),
+        ]),
+      ),
+    ),
+  );
 }

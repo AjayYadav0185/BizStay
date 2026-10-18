@@ -42,8 +42,6 @@ class BizStayAppState extends State<BizStayApp> {
       title: 'BizStay',
       debugShowCheckedModeBanner: false,
       theme: BizStayThemeData.light(),
-      darkTheme: BizStayThemeData.dark(),
-      themeMode: ThemeMode.system,
       home: _loading
           ? const Scaffold(
               body: Center(child: CircularProgressIndicator()))

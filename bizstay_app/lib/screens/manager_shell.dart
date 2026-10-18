@@ -29,7 +29,10 @@ class _ManagerShellState extends State<ManagerShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      ManagerToday(onLogout: _logout, name: widget.session.name),
+      ManagerToday(
+          onLogout: _logout,
+          name: widget.session.name,
+          onGoTab: (i) => setState(() => _tab = i)),
       const ManagerRooms(),
       const ManagerResidents(),
       const ManagerBilling(),

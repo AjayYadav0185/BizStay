@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../api_service.dart';
+import '../theme/bizstay_colors.dart';
 import '../widgets/biz.dart';
+import '../widgets/bizstay_ui.dart';
 
 class ManagerResidents extends StatefulWidget {
   const ManagerResidents({super.key});
@@ -34,21 +36,32 @@ class _ManagerResidentsState extends State<ManagerResidents> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Biz.bg,
-      appBar: AppBar(title: const Text('Residents')),
+      appBar: AppBar(
+        title: const Text('Residents'),
+        actions: [
+          IconButton(
+              tooltip: 'Add resident',
+              onPressed: () =>
+                  showAdminOnlySheet(
+                      context, 'Residents'),
+              icon: const Icon(Icons.person_add_alt)),
+        ],
+      ),
+      floatingActionButton:
+          FloatingActionButton.extended(
+        onPressed: () => showAdminOnlySheet(
+            context, 'Residents'),
+        icon: const Icon(Icons.add),
+        label: const Text('Add resident'),
+      ),
       body: Column(children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-          child: TextField(
+          padding:
+              const EdgeInsets.fromLTRB(12, 12, 12, 4),
+          child: SearchField(
             controller: _search,
-            onSubmitted: (_) => _reload(),
-            decoration: InputDecoration(
-                hintText: 'Search name or phone',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                    onPressed: _reload, icon: const Icon(Icons.arrow_forward)),
-                border: const OutlineInputBorder(),
-                filled: true,
-                fillColor: Colors.white),
+            hint: 'Search name or phone',
+            onSearch: _reload,
           ),
         ),
         Expanded(
@@ -64,7 +77,10 @@ class _ManagerResidentsState extends State<ManagerResidents> {
               }
               final rows = ApiService.pageItems(snap.data);
               if (rows.isEmpty) {
-                return const Center(child: Text('No residents found.'));
+                return const EmptyState(
+                    icon: Icons.people_outline,
+                    message:
+                        'No residents found. Try another search.');
               }
               return RefreshIndicator(
                 onRefresh: () async {
@@ -79,26 +95,43 @@ class _ManagerResidentsState extends State<ManagerResidents> {
                     final g = rows[i];
                     final due = ApiService.numOf(g['outstanding']);
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
+                      margin:
+                          const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: CircleAvatar(
+                            backgroundColor:
+                                BizStayColors.navy900,
                             child: Text(
-                                (g['full_name'] ?? '?').toString().substring(0, 1).toUpperCase())),
-                        title: Text('${g['full_name'] ?? ''}'),
+                                (g['full_name'] ?? '?')
+                                    .toString()
+                                    .substring(0, 1)
+                                    .toUpperCase(),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight:
+                                        FontWeight.w800))),
+                        title: Text(
+                            '${g['full_name'] ?? ''}'),
                         subtitle: Text(
-                            '${g['phone'] ?? ''} • Bed ${g['bed'] ?? '—'} • ${g['aadhaar'] ?? ''}'),
+                            '${g['phone'] ?? ''} • Bed ${g['bed'] ?? '—'} • Room ${g['room'] ?? '—'}'),
                         trailing: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize:
+                                MainAxisSize.min,
+                            crossAxisAlignment:
+                                CrossAxisAlignment.end,
                             children: [
-                              Biz.chip('${g['kyc_status'] ?? ''}'),
+                              StatusChip(
+                                  '${g['kyc_status'] ?? ''}'),
                               const SizedBox(height: 4),
-                              Text(Biz.money(due),
+                              MoneyText(
+                                  Biz.money(due),
                                   style: TextStyle(
-                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
                                       color: due > 0
-                                          ? Colors.red
-                                          : Colors.green)),
+                                          ? BizStayColors
+                                              .errorDark
+                                          : BizStayColors
+                                              .successDark)),
                             ]),
                       ),
                     );

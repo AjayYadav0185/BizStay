@@ -41,12 +41,6 @@ abstract final class BizStayColors {
   static const info = Color(0xFF0284C7);
   static const infoBg = Color(0xFFE0F2FE);
 
-  // ── Dark theme surfaces ────────────────────────────────
-  static const darkBg = Color(0xFF020617);
-  static const darkSurface = Color(0xFF0F172A);
-  static const darkCard = Color(0xFF1E293B);
-  static const darkBorder = Color(0xFF334155);
-
   /// Map any backend status string → semantic color.
   static Color statusColor(String raw) {
     switch (raw.toLowerCase().trim()) {
