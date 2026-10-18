@@ -57,11 +57,10 @@ class _ManagerRoomsState extends State<ManagerRooms> {
       appBar: AppBar(
         title: const Text('Rooms & beds'),
         actions: [
-          IconButton(
+          AddAppBarButton(
               tooltip: 'Add room',
               onPressed: () =>
-                  showAdminOnlySheet(context, 'Rooms'),
-              icon: const Icon(Icons.add)),
+                  showAdminOnlySheet(context, 'Rooms')),
         ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
@@ -123,11 +122,10 @@ class _ManagerRoomsState extends State<ManagerRooms> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: AddFab(
+        label: 'Add room',
         onPressed: () =>
             showAdminOnlySheet(context, 'Rooms'),
-        icon: const Icon(Icons.add),
-        label: const Text('Add room'),
       ),
     );
   }

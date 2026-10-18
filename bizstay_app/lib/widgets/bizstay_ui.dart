@@ -320,3 +320,52 @@ Future<void> showAdminOnlySheet(BuildContext context, String what) {
     ),
   );
 }
+
+/// One shared Add button used on EVERY listing screen, so the label
+/// and pill shape always match. Navy pill + white text + plus icon.
+class AddFab extends StatelessWidget {
+  const AddFab({super.key, required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton.extended(
+      onPressed: onPressed,
+      backgroundColor: BizStayColors.navy900,
+      foregroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16)),
+      icon: const Icon(Icons.add_rounded, size: 20),
+      label: Text(label,
+          style: const TextStyle(
+              fontSize: 14, fontWeight: FontWeight.w800)),
+    );
+  }
+}
+
+/// Matching AppBar "+" action for the same Add flow.
+class AddAppBarButton extends StatelessWidget {
+  const AddAppBarButton(
+      {super.key, required this.tooltip, required this.onPressed});
+
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Container(
+        padding: const EdgeInsets.all(7),
+        decoration: BoxDecoration(
+            color: BizStayColors.gold500,
+            borderRadius: BorderRadius.circular(10)),
+        child: const Icon(Icons.add_rounded,
+            color: BizStayColors.navy900, size: 18),
+      ),
+    );
+  }
+}

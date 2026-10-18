@@ -39,20 +39,17 @@ class _ManagerResidentsState extends State<ManagerResidents> {
       appBar: AppBar(
         title: const Text('Residents'),
         actions: [
-          IconButton(
+          AddAppBarButton(
               tooltip: 'Add resident',
               onPressed: () =>
                   showAdminOnlySheet(
-                      context, 'Residents'),
-              icon: const Icon(Icons.person_add_alt)),
+                      context, 'Residents')),
         ],
       ),
-      floatingActionButton:
-          FloatingActionButton.extended(
+      floatingActionButton: AddFab(
+        label: 'Add resident',
         onPressed: () => showAdminOnlySheet(
             context, 'Residents'),
-        icon: const Icon(Icons.add),
-        label: const Text('Add resident'),
       ),
       body: Column(children: [
         Padding(

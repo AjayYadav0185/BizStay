@@ -109,10 +109,15 @@ class Invoice extends Model
      */
     public function scopeOverdue(Builder $query): Builder
     {
-        return $query->whereIn('status', [
-            InvoiceStatus::Unpaid->value,
-            InvoiceStatus::PartiallyPaid->value,
-        ])->whereDate('due_date', '<', now()->toDateString());
+        return $query->where(function (Builder $q): void {
+            $q->where('status', InvoiceStatus::Overdue->value)
+                ->orWhere(function (Builder $q2): void {
+                    $q2->whereIn('status', [
+                        InvoiceStatus::Unpaid->value,
+                        InvoiceStatus::PartiallyPaid->value,
+                    ])->whereDate('due_date', '<', now()->toDateString());
+                });
+        });
     }
 
     /**

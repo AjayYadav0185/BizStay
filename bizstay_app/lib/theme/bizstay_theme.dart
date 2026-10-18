@@ -233,10 +233,17 @@ abstract final class BizStayThemeData {
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: BizStayColors.navy900,
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: BizStayColors.navy900,
         foregroundColor: Colors.white,
-        shape: CircleBorder(),
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
+        extendedTextStyle: const TextStyle(
+            fontSize: 14, fontWeight: FontWeight.w800),
+        extendedIconLabelSpacing: 8,
+        extendedPadding:
+            EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       ),
       searchBarTheme: SearchBarThemeData(
         backgroundColor: const WidgetStatePropertyAll(Colors.white),

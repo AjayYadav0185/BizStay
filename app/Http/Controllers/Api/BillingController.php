@@ -27,6 +27,10 @@ final class BillingController
         $query->when($request->string('status')->toString(), function ($q, $status): void {
             if ($status === 'outstanding') {
                 $q->outstanding();
+            } elseif ($status === 'overdue') {
+                $q->overdue();
+            } elseif ($status === 'all') {
+                // No filter — return everything.
             } elseif (InvoiceStatus::tryFrom($status)) {
                 $q->where('status', $status);
             }

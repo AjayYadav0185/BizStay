@@ -33,9 +33,36 @@ class _ManagerBillingState extends State<ManagerBilling> {
 
   List<Map<String, dynamic>> _visible(
       List<Map<String, dynamic>> rows) {
+    var out = rows;
+    // Client-side safety net: server scopes can drift (e.g. an
+    // invoice still stamped "unpaid" past its due date). Enforce
+    // the selected queue locally so chips always behave.
+    if (_filter == 'paid') {
+      out = out
+          .where((v) =>
+              '${v['status']}' == 'paid' ||
+              ApiService.numOf(v['balance']) <= 0)
+          .toList();
+    } else if (_filter == 'overdue') {
+      out = out.where((v) {
+        if ('${v['status']}' == 'overdue') return true;
+        if ('${v['status']}' == 'paid') return false;
+        final due = DateTime.tryParse('${v['due_date'] ?? ''}');
+        if (due == null) return false;
+        final today = DateTime.now();
+        final d = DateTime(today.year, today.month, today.day);
+        return due.isBefore(d);
+      }).toList();
+    } else if (_filter == 'outstanding' || _filter.isEmpty) {
+      out = out
+          .where((v) =>
+              '${v['status']}' != 'paid' &&
+              ApiService.numOf(v['balance']) > 0)
+          .toList();
+    }
     final q = _search.text.trim().toLowerCase();
-    if (q.isEmpty) return rows;
-    return rows.where((v) {
+    if (q.isEmpty) return out;
+    return out.where((v) {
       final hay =
           '${v['invoice_number']} ${v['guest']} ${v['cycle']}'
               .toLowerCase();
@@ -44,6 +71,7 @@ class _ManagerBillingState extends State<ManagerBilling> {
   }
 
   void _reload() {
+    _search.clear();
     setState(() => _future = ApiService.invoices(status: _filter));
   }
 
@@ -153,12 +181,12 @@ class _ManagerBillingState extends State<ManagerBilling> {
           padding:
               const EdgeInsets.fromLTRB(12, 10, 12, 2),
           child: Row(
-              children: ['outstanding', 'overdue', 'paid', '']
+              children: ['outstanding', 'overdue', 'paid', 'all']
                   .map((f) => Padding(
                         padding:
                             const EdgeInsets.only(right: 8),
                         child: ChoiceChip(
-                            label: Text(f.isEmpty ? 'all' : f),
+                            label: Text(f),
                             selected: _filter == f,
                             onSelected: (_) {
                               _filter = f;
@@ -215,11 +243,10 @@ class _ManagerBillingState extends State<ManagerBilling> {
           ),
         ),
       ]),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: AddFab(
+        label: 'New bill',
         onPressed: () =>
             showAdminOnlySheet(context, 'Invoices'),
-        icon: const Icon(Icons.add),
-        label: const Text('New bill'),
       ),
     );
   }

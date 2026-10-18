@@ -36,7 +36,9 @@ class _ManagerOpsState extends State<ManagerOps>
         _ComplaintList(),
         _LeadList(),
       ]),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: AddFab(
+        label:
+            _tabs.index == 1 ? 'Add lead' : 'Log complaint',
         onPressed: () async {
           if (_tabs.index == 1) {
             if (context.mounted) {
@@ -53,10 +55,6 @@ class _ManagerOpsState extends State<ManagerOps>
             setState(() {});
           }
         },
-        tooltip: 'Add',
-        icon: const Icon(Icons.add),
-        label: Text(
-            _tabs.index == 1 ? 'Add lead' : 'Log complaint'),
       ),
     );
   }
