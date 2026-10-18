@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
               const SizedBox(height: 6),
               const Text(
-                  'Emulator: http://10.0.2.2:8000/api. Real phone: http://<mac-ip>:8000/api',
+                  'Emulator: https://bizstay.onrender.com/api. Real phone: http://<mac-ip>:8000/api',
                   style: TextStyle(fontSize: 12, color: Colors.black54)),
               const SizedBox(height: 10),
               TextField(
@@ -112,13 +112,49 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(Icons.apartment_rounded,
-                          size: 46, color: Biz.primary),
-                      const SizedBox(height: 8),
-                      const Text('Welcome to BizStay',
+                      Center(
+                        child: Container(
+                          width: 96,
+                          height: 96,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF1C1133)
+                                    .withValues(alpha: 0.30),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: Image.asset(
+                              'assets/icons/bizstay_icon_master.png',
+                              width: 96,
+                              height: 96,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text('BizStay',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.w800)),
+                              fontSize: 22, fontWeight: FontWeight.w800)),
+                      const Text('PG Management • Gurgaon',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.2,
+                              color: Colors.black54)),
+                      const SizedBox(height: 6),
+                      const Text('Welcome back',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 4),
                       const Text(
                           'Manager: email. Resident: phone number.',

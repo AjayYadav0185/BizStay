@@ -66,17 +66,17 @@ class DummyDataSeeder extends Seeder
     private function seedUsers(): User
     {
         $admin = User::query()->firstOrCreate(
-            ['email' => 'admin@bizstay.local'],
+            ['email' => 'admin@mail.com'],
             ['name' => 'BizStay Admin', 'password' => 'password'],
         );
 
         User::query()->firstOrCreate(
-            ['email' => 'manager@bizstay.local'],
+            ['email' => 'manager@mail.com'],
             ['name' => 'Rakesh Dutta (Property Manager)', 'password' => 'password'],
         );
 
         User::query()->firstOrCreate(
-            ['email' => 'warden@bizstay.local'],
+            ['email' => 'warden@mail.com'],
             ['name' => 'Suresh Nair (Night Warden)', 'password' => 'password'],
         );
 
@@ -101,7 +101,7 @@ class DummyDataSeeder extends Seeder
                 'check_out_time' => '11:00',
                 'manager_name' => 'Rakesh Dutta',
                 'contact_phone' => '9999900001',
-                'contact_email' => 'manager@bizstay.local',
+                'contact_email' => 'manager@mail.com',
                 'total_floors' => 3,
                 'amenities' => ['wifi', 'ac', 'laundry', 'power_backup', 'cctv', 'housekeeping', 'mess'],
                 'security_deposit_months' => 1,
@@ -313,7 +313,7 @@ class DummyDataSeeder extends Seeder
 
     private function seedMeterReadings(Carbon $readingDate): void
     {
-        $managerId = User::query()->where('email', 'manager@bizstay.local')->value('id');
+        $managerId = User::query()->where('email', 'manager@mail.com')->value('id');
         $meters = UtilityMeter::query()->active()->get();
 
         foreach ($meters as $meter) {

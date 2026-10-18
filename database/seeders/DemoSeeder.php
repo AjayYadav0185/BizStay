@@ -22,9 +22,9 @@ class DemoSeeder extends Seeder
     public function run(): void
     {
         $staff = [
-            ['email' => 'admin@bizstay.local', 'name' => 'BizStay Admin', 'role' => 'manager'],
-            ['email' => 'manager@bizstay.local', 'name' => 'Rakesh Dutta (Property Manager)', 'role' => 'manager'],
-            ['email' => 'warden@bizstay.local', 'name' => 'Suresh Nair (Night Warden)', 'role' => 'manager'],
+            ['email' => 'admin@mail.com', 'name' => 'BizStay Admin', 'role' => 'manager'],
+            ['email' => 'manager@mail.com', 'name' => 'Rakesh Dutta (Property Manager)', 'role' => 'manager'],
+            ['email' => 'warden@mail.com', 'name' => 'Suresh Nair (Night Warden)', 'role' => 'manager'],
         ];
         foreach ($staff as $row) {
             User::query()->firstOrCreate(
@@ -110,13 +110,13 @@ class DemoSeeder extends Seeder
                 ['guest_id' => $guest->id],
                 [
                     'name' => $guest->full_name,
-                    'email' => $guest->phone.'@tenant.bizstay.local',
+                    'email' => $guest->phone.'@tenant.mail.com',
                     'password' => 'password',
                     'role' => 'tenant',
                 ]
             );
         }
 
-        $this->command?->info('Demo seed: manager admin@bizstay.local / password, tenant login 9810000001 / password, '.count($rooms).' rooms ready.');
+        $this->command?->info('Demo seed: manager admin@mail.com / password, tenant login 9810000001 / password, '.count($rooms).' rooms ready.');
     }
 }

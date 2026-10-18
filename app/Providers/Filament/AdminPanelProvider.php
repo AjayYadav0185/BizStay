@@ -28,6 +28,8 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login(Login::class)
             ->brandName('BizStay PG · Gurugram')
+            ->brandLogo(asset('images/bizstay-logo.png'))
+            ->brandLogoHeight('2.75rem')
             ->colors([
                 'primary' => '#f43f5e',  // Warm Rose Coral - unique accent
                 'secondary' => '#486581', // Deep Slate Blue

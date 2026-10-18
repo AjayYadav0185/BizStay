@@ -12,12 +12,12 @@ flutter run
 ```
 
 API URL: `--dart-define=BIZSTAY_API_URL=...`, else login gear-icon
-override, else default `http://10.0.2.2:8000/api` (emulator).
+override, else default `https://bizstay.onrender.com/api` (emulator).
 Real phone on same Wi-Fi: `http://<mac-lan-ip>:8000/api`.
 
 ## Sign in
 
-- Manager: email + password, e.g. `admin@bizstay.local` / `password`.
+- Manager: email + password, e.g. `admin@mail.com` / `password`.
 - Tenant: phone + password, e.g. `9810000001` / `password`.
 
 ## Screens
