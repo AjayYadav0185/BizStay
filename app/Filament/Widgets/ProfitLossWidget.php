@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Widgets;
 
 use App\Models\Property;
+use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -20,6 +21,13 @@ final class ProfitLossWidget extends StatsOverviewWidget
     protected int|string|array $columnSpan = 'full';
 
     protected static ?int $sort = 2;
+
+    public static function canView(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof User && $user->canManageFinance();
+    }
 
     protected function getStats(): array
     {

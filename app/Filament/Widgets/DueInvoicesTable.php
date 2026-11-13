@@ -11,6 +11,7 @@ use App\Models\Invoice;
 use App\Services\InvoiceService;
 use Filament\Forms;
 use Filament\Notifications\Notification;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
@@ -54,7 +55,7 @@ final class DueInvoicesTable extends TableWidget
                     ->label('Balance')
                     ->money('INR')
                     ->state(fn (Invoice $record): float => $record->balanceDue())
-                    ->weight(\Filament\Support\Enums\FontWeight::Bold),
+                    ->weight(FontWeight::Bold),
                 Tables\Columns\TextColumn::make('due_date')
                     ->label('Due')
                     ->date('d M Y')
@@ -95,6 +96,13 @@ final class DueInvoicesTable extends TableWidget
                             ->success()
                             ->send();
                     }),
+                Tables\Actions\Action::make('whatsapp')
+                    ->label('WhatsApp')
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->color('success')
+                    ->visible(fn (Invoice $record): bool => $record->booking?->guest?->whatsappNumber() !== null)
+                    ->url(fn (Invoice $record): string => route('invoices.whatsapp', $record))
+                    ->openUrlInNewTab(),
                 Tables\Actions\Action::make('view')
                     ->label('Open')
                     ->icon('heroicon-o-arrow-top-right-on-square')

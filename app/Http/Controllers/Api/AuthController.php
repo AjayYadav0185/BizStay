@@ -29,22 +29,29 @@ final class AuthController
         $login = trim($data['login']);
         $user = str_contains($login, '@')
             ? User::query()->where('email', $login)->first()
-            : User::query()->where('email', $login)->orWhereHas('guest', fn ($q) => $q->where('phone', $login))->first();
+            : User::query()
+                ->where('phone', $login)
+                ->orWhereHas('guest', fn ($q) => $q->where('phone', $login))
+                ->first();
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages(['login' => ['Invalid credentials.']]);
+        }
+
+        if (! $user->isActive()) {
+            throw ValidationException::withMessages(['login' => ['This login has been disabled. Contact the PG office.']]);
         }
 
         $token = $user->createToken($data['device_name'] ?? 'bizstay-flutter')->plainTextToken;
 
         return response()->json([
             'token' => $token,
-            'role' => $user->role ?? 'manager',
+            'role' => $user->roleOrDefault()->value,
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $user->role ?? 'manager',
+                'role' => $user->roleOrDefault()->value,
                 'guest_id' => $user->guest_id,
             ],
         ]);
@@ -59,7 +66,7 @@ final class AuthController
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'role' => $user->role ?? 'manager',
+            'role' => $user->roleOrDefault()->value,
             'guest' => $user->guest ? [
                 'id' => $user->guest->id,
                 'full_name' => $user->guest->full_name,

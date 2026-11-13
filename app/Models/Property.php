@@ -8,6 +8,7 @@ use App\Enums\BedStatus;
 use App\Enums\MeterType;
 use App\Enums\PropertyType;
 use App\Services\InvoiceService;
+use Database\Factories\PropertyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -33,16 +34,24 @@ use Illuminate\Support\Carbon;
  */
 class Property extends Model
 {
-    /** @use HasFactory<\Database\Factories\PropertyFactory> */
+    /** @use HasFactory<PropertyFactory> */
     use HasFactory;
 
     protected $fillable = [
         'name', 'code', 'type', 'address', 'locality', 'city', 'state', 'pincode', 'gstin', 'upi_id',
         'check_in_time', 'check_out_time',
-        'manager_name', 'contact_phone', 'contact_email', 'total_floors', 'amenities',
+        'manager_name', 'owner_name', 'owner_pan', 'contact_phone', 'whatsapp_number', 'contact_email',
+        'total_floors', 'amenities', 'public_listing',
         'security_deposit_months', 'notice_period_days', 'billing_cycle_start_day',
         'electricity_rate_per_unit', 'water_rate_per_unit', 'meal_charge_per_day',
         'maintenance_charge_per_bed', 'late_fee_percent', 'is_active', 'notes',
+    ];
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'public_listing' => true,
     ];
 
     /**
@@ -54,6 +63,7 @@ class Property extends Model
             'type' => PropertyType::class,
             'amenities' => 'array',
             'is_active' => 'boolean',
+            'public_listing' => 'boolean',
             'total_floors' => 'integer',
             'security_deposit_months' => 'integer',
             'notice_period_days' => 'integer',
@@ -107,6 +117,25 @@ class Property extends Model
     public function rateFor(MeterType $meterType): float
     {
         return (float) $this->{$meterType->getSettingKey()};
+    }
+
+    /**
+     * UPI deep link (NPCI spec) that any UPI app opens with payee, amount and
+     * note pre-filled. Null when the building has no UPI ID configured.
+     */
+    public function upiPaymentUri(float $amount, string $note): ?string
+    {
+        if (blank($this->upi_id)) {
+            return null;
+        }
+
+        return 'upi://pay?'.http_build_query([
+            'pa' => $this->upi_id,
+            'pn' => $this->name,
+            'am' => number_format(max(0, $amount), 2, '.', ''),
+            'cu' => 'INR',
+            'tn' => mb_substr($note, 0, 60),
+        ], '', '&', PHP_QUERY_RFC3986);
     }
 
     public function getFullAddressAttribute(): string

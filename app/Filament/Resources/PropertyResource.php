@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Filament\Resources;
 
 use App\Enums\PropertyType;
+use App\Filament\Concerns\RestrictedToFinance;
 use App\Filament\Resources\PropertyResource\Pages;
 use App\Models\Property;
+use App\Support\Ncr;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -20,11 +23,13 @@ use Filament\Tables\Table;
  */
 class PropertyResource extends Resource
 {
+    use RestrictedToFinance;
+
     protected static ?string $model = Property::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
 
-    protected static ?string $navigationGroup = 'Property';
+    protected static ?string $navigationGroup = 'Settings';
 
     protected static ?int $navigationSort = 1;
 
@@ -65,22 +70,54 @@ class PropertyResource extends Resource
                 Forms\Components\Section::make('Location')->schema([
                     Forms\Components\Grid::make(2)->schema([
                         Forms\Components\Textarea::make('address')->required()->rows(2)->columnSpanFull(),
+                        Forms\Components\Select::make('city')
+                            ->options(Ncr::cityOptions())
+                            ->required()
+                            ->default('Gurugram')
+                            ->live()
+                            ->afterStateUpdated(function (Forms\Set $set, ?string $state): void {
+                                $set('state', Ncr::stateFor($state));
+                                $set('locality', null);
+                            })
+                            ->helperText(fn (Forms\Get $get): string => 'Electricity: '.Ncr::discomFor($get('city')).' · Police verification: '.Ncr::policePortalFor($get('city'))['name']),
                         Forms\Components\Select::make('locality')
-                            ->options(\App\Support\Gurgaon::localityOptions())
+                            ->options(fn (Forms\Get $get): array => Ncr::localityOptions($get('city')))
                             ->searchable()
-                            ->placeholder('Sector 44, DLF Phase 3, Golf Course Road…'),
-                        Forms\Components\TextInput::make('city')->required()->default('Gurugram'),
+                            ->placeholder('Sector 44, Laxmi Nagar, Sector 62…'),
                         Forms\Components\TextInput::make('state')->required()->default('Haryana'),
                         Forms\Components\TextInput::make('pincode')->numeric()->length(6)->placeholder('122003'),
-                        Forms\Components\TextInput::make('gstin')->label('GSTIN')->maxLength(20)->placeholder('06ABCDE1234F1Z5'),
-                        Forms\Components\TextInput::make('upi_id')->label('UPI ID (printed on invoice)')->placeholder('bizstay@okhdfc')->columnSpanFull(),
+                        Forms\Components\TextInput::make('gstin')
+                            ->label('GSTIN')
+                            ->maxLength(15)
+                            ->regex('/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/')
+                            ->placeholder('06ABCDE1234F1Z5')
+                            ->helperText('Only needed if you charge GST on hotel / short stays'),
+                        Forms\Components\TextInput::make('upi_id')
+                            ->label('UPI ID (QR + reminders)')
+                            ->regex('/^[\w.\-]{2,256}@[a-zA-Z]{2,64}$/')
+                            ->placeholder('bizstay@okhdfc'),
                         Forms\Components\TextInput::make('contact_email')->email(),
+                        Forms\Components\TextInput::make('whatsapp_number')->label('WhatsApp number (public page)')->tel()->maxLength(20),
                         Forms\Components\Grid::make(2)->schema([
                             Forms\Components\TextInput::make('check_in_time')->default('12:00')->placeholder('12:00'),
                             Forms\Components\TextInput::make('check_out_time')->default('11:00')->placeholder('11:00'),
                         ])->columnSpanFull(),
                     ]),
                 ]),
+
+                Forms\Components\Section::make('Owner (for HRA rent receipts)')
+                    ->description('Residents claim HRA with your rent receipts. Employers require the landlord PAN once annual rent crosses ₹1,00,000.')
+                    ->schema([
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\TextInput::make('owner_name')->label('Landlord / owner name')->maxLength(255),
+                            Forms\Components\TextInput::make('owner_pan')
+                                ->label('Owner PAN')
+                                ->maxLength(10)
+                                ->regex('/^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/')
+                                ->dehydrateStateUsing(fn (?string $state): ?string => $state ? strtoupper($state) : null)
+                                ->placeholder('ABCDE1234F'),
+                        ]),
+                    ])->collapsible(),
 
                 Forms\Components\Section::make('Billing & tariffs')
                     ->description('Drives proration, utility billing and mess deductions. Review these before generating a cycle.')
@@ -115,7 +152,7 @@ class PropertyResource extends Resource
                                 ->suffix('/ kWh')
                                 ->default(9)
                                 ->required()
-                                ->helperText('DHBVN-recovered rate for Gurgaon'),
+                                ->helperText(fn (Forms\Get $get): string => 'Typical recovered rate with '.Ncr::discomFor($get('city')).': ₹'.number_format(Ncr::discomRate($get('city')), 2).'/kWh'),
                             Forms\Components\TextInput::make('water_rate_per_unit')
                                 ->label('Water rate')
                                 ->numeric()
@@ -159,8 +196,19 @@ class PropertyResource extends Resource
                             'Housekeeping' => 'Housekeeping',
                             'RO Water' => 'RO Water',
                             'Common TV' => 'Common TV',
+                            'Biometric Entry' => 'Biometric Entry',
+                            'Gym' => 'Gym',
+                            'Parking' => 'Parking',
+                            'Fridge & Microwave' => 'Fridge & Microwave',
+                            'Washing Machine' => 'Washing Machine',
+                            'Study Room' => 'Study Room',
+                            'Near Metro' => 'Near Metro',
                         ]),
                     Forms\Components\Toggle::make('is_active')->default(true),
+                    Forms\Components\Toggle::make('public_listing')
+                        ->label('Show public page')
+                        ->default(true)
+                        ->helperText(fn (): string => 'Live availability + enquiry form at '.route('stay.show')),
                     Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
                 ]),
             ]);
@@ -173,6 +221,7 @@ class PropertyResource extends Resource
                 Tables\Columns\TextColumn::make('name')->searchable(),
                 Tables\Columns\TextColumn::make('code')->badge()->color('gray'),
                 Tables\Columns\TextColumn::make('type')->badge(),
+                Tables\Columns\TextColumn::make('city')->description(fn (Property $record): ?string => $record->locality),
                 Tables\Columns\TextColumn::make('total_floors')->label('Floors')->numeric(),
                 Tables\Columns\TextColumn::make('occupancy')
                     ->label('Occupancy')
@@ -182,6 +231,12 @@ class PropertyResource extends Resource
                 Tables\Columns\IconColumn::make('is_active')->boolean()->label('Active'),
             ])
             ->actions([
+                Tables\Actions\Action::make('publicPage')
+                    ->label('Public page')
+                    ->icon('heroicon-o-globe-alt')
+                    ->visible(fn (Property $record): bool => (bool) $record->public_listing)
+                    ->url(fn (): string => route('stay.show'))
+                    ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
             ]);
     }
@@ -196,7 +251,7 @@ class PropertyResource extends Resource
     }
 
     /**
-     * @return array<string, \Filament\Resources\Pages\PageRegistration>
+     * @return array<string, PageRegistration>
      */
     public static function getPages(): array
     {

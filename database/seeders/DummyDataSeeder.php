@@ -33,6 +33,7 @@ use App\Services\InvoiceService;
 use App\Services\ProrationEngine;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -67,17 +68,17 @@ class DummyDataSeeder extends Seeder
     {
         $admin = User::query()->firstOrCreate(
             ['email' => 'admin@mail.com'],
-            ['name' => 'BizStay Admin', 'password' => 'password'],
+            ['name' => 'BizStay Owner', 'password' => 'password', 'role' => 'admin'],
         );
 
         User::query()->firstOrCreate(
             ['email' => 'manager@mail.com'],
-            ['name' => 'Rakesh Dutta (Property Manager)', 'password' => 'password'],
+            ['name' => 'Rakesh Dutta (Property Manager)', 'password' => 'password', 'role' => 'manager'],
         );
 
         User::query()->firstOrCreate(
             ['email' => 'warden@mail.com'],
-            ['name' => 'Suresh Nair (Night Warden)', 'password' => 'password'],
+            ['name' => 'Suresh Nair (Night Warden)', 'password' => 'password', 'role' => 'staff'],
         );
 
         return $admin;
@@ -117,7 +118,7 @@ class DummyDataSeeder extends Seeder
         );
     }
 
-    private function seedRoomsAndMeters(): \Illuminate\Support\Collection
+    private function seedRoomsAndMeters(): Collection
     {
         $plan = [
             ['floor' => 0, 'number' => '101', 'sharing' => SharingType::Double, 'rent' => 9500.00, 'nightly' => 1499.00, 'ac' => false],
@@ -437,7 +438,7 @@ class DummyDataSeeder extends Seeder
         }
     }
 
-    private function seedComplaints(User $admin, \Illuminate\Support\Collection $rooms): void
+    private function seedComplaints(User $admin, Collection $rooms): void
     {
         $guests = Guest::query()->staying()->orderBy('id')->get();
 

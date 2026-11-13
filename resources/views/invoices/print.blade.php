@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Invoice {{ $invoice->invoice_number }}</title>
+@php
+    use App\Support\IndianCurrency as Rs;
+    $isTaxInvoice = (float) ($invoice->gst_amount ?? 0) > 0 && filled($property?->gstin);
+    $docTitle = $isTaxInvoice ? 'TAX INVOICE' : ($invoice->is_checkout_settlement ? 'SETTLEMENT BILL' : 'RENT INVOICE');
+@endphp
+<title>{{ ucwords(strtolower($docTitle)) }} {{ $invoice->invoice_number }}</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1f2937; padding: 40px; max-width: 820px; margin: 0 auto; }
@@ -26,6 +31,10 @@
     .cols { display: flex; gap: 32px; margin-top: 20px; }
     .cols > div { flex: 1; }
     .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 20px; background: #f59e0b; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .pay { display: flex; gap: 20px; align-items: center; }
+    .pay #qr { width: 132px; height: 132px; flex: none; }
+    .pay #qr img, .pay #qr canvas { width: 132px !important; height: 132px !important; }
+    .words { font-size: 12px; color: #374151; margin-top: 8px; text-align: right; font-style: italic; }
     @media print { .print-btn { display: none; } body { padding: 0; } }
 </style>
 </head>
@@ -41,7 +50,7 @@
         @if ($property?->upi_id)<div class="muted">UPI: {{ $property->upi_id }}</div>@endif
     </div>
     <div style="text-align:right">
-        <h1>TAX INVOICE</h1>
+        <h1>{{ $docTitle }}</h1>
         <div class="muted">{{ $invoice->invoice_number }}</div>
         <div class="muted">Cycle: {{ $invoice->billing_cycle_start->format('d M Y') }} – {{ $invoice->billing_cycle_end->format('d M Y') }}</div>
         <div class="muted">Due: {{ $invoice->due_date->format('d M Y') }}</div>
@@ -59,6 +68,9 @@
     <div style="text-align:right">
         <strong>Stay</strong><br>
         <span class="muted">Check-in {{ $invoice->booking?->check_in_date?->format('d M Y') ?? '—' }}</span>
+        @if ($isTaxInvoice)
+        <br><span class="muted">SAC 996311 · Place of supply: {{ $property?->state }}</span>
+        @endif
     </div>
 </div>
 <table>
@@ -66,24 +78,24 @@
         <tr><th>Description</th><th class="num">Amount</th></tr>
     </thead>
     <tbody>
-        <tr><td>Rent ({{ $invoice->billing_cycle_start->format('M Y') }}){{ $invoice->booking?->stay_type === 'hotel' ? ' · ' . $invoice->booking?->nightsCount() . ' night(s)' : '' }}</td><td class="num">₹{{ number_format((float) $invoice->rent_amount, 2) }}</td></tr>
+        <tr><td>Rent ({{ $invoice->billing_cycle_start->format('M Y') }}){{ $invoice->booking?->stay_type === 'hotel' ? ' · ' . $invoice->booking?->nightsCount() . ' night(s)' : '' }}</td><td class="num">{{ Rs::format((float) $invoice->rent_amount) }}</td></tr>
         @if ((float) $invoice->utility_amount > 0)
-        <tr><td>Utility charges (metered)</td><td class="num">₹{{ number_format((float) $invoice->utility_amount, 2) }}</td></tr>
+        <tr><td>Utility charges (metered)</td><td class="num">{{ Rs::format((float) $invoice->utility_amount) }}</td></tr>
         @endif
         @if ((float) $invoice->maintenance_charges > 0)
-        <tr><td>Maintenance</td><td class="num">₹{{ number_format((float) $invoice->maintenance_charges, 2) }}</td></tr>
+        <tr><td>Maintenance</td><td class="num">{{ Rs::format((float) $invoice->maintenance_charges) }}</td></tr>
         @endif
         @if ((float) $invoice->other_charges != 0.0)
-        <tr><td>Other charges</td><td class="num">₹{{ number_format((float) $invoice->other_charges, 2) }}</td></tr>
+        <tr><td>Other charges</td><td class="num">{{ Rs::format((float) $invoice->other_charges) }}</td></tr>
         @endif
         @if ((float) ($invoice->gst_amount ?? 0) > 0)
-        <tr><td>GST @ {{ number_format((float) $invoice->gst_percent, 2) }}%</td><td class="num">₹{{ number_format((float) $invoice->gst_amount, 2) }}</td></tr>
+        <tr><td>GST @ {{ number_format((float) $invoice->gst_percent, 2) }}%</td><td class="num">{{ Rs::format((float) $invoice->gst_amount) }}</td></tr>
         @endif
         @if ($invoice->is_checkout_settlement)
         <tr><td class="muted">Check-out settlement invoice</td><td></td></tr>
         @endif
         @if ((float) $invoice->food_deduction > 0)
-        <tr><td>Mess credit (leave / opt-out days)</td><td class="num">−₹{{ number_format((float) $invoice->food_deduction, 2) }}</td></tr>
+        <tr><td>Mess credit (leave / opt-out days)</td><td class="num">{{ '−' }}{{ Rs::format((float) $invoice->food_deduction) }}</td></tr>
         @endif
         @if ($invoice->late_fee_charged_on !== null)
         <tr><td>Late fee (charged {{ $invoice->late_fee_charged_on->format('d M Y') }})</td><td class="num">included in other charges</td></tr>
@@ -92,10 +104,32 @@
 </table>
 
 <table class="totals">
-    <tr><td class="num" style="width:70%"></td><td class="num muted">Total due</td><td class="num">₹{{ number_format((float) $invoice->total_due, 2) }}</td></tr>
-    <tr><td></td><td class="num muted">Paid</td><td class="num">₹{{ number_format((float) $invoice->amount_paid, 2) }}</td></tr>
-    <tr class="grand"><td></td><td class="num muted">Balance</td><td class="num">₹{{ number_format($balance, 2) }}</td></tr>
+    <tr><td class="num" style="width:70%"></td><td class="num muted">Total due</td><td class="num">{{ Rs::format((float) $invoice->total_due) }}</td></tr>
+    <tr><td></td><td class="num muted">Paid</td><td class="num">{{ Rs::format((float) $invoice->amount_paid) }}</td></tr>
+    <tr class="grand"><td></td><td class="num muted">Balance</td><td class="num">{{ Rs::format($balance) }}</td></tr>
 </table>
+<div class="words">{{ $balance > 0 ? 'Balance' : 'Total' }}: {{ Rs::inWords($balance > 0 ? $balance : (float) $invoice->total_due) }}</div>
+
+@if ($upiUri)
+<div class="box pay">
+    <div id="qr" data-uri="{{ $upiUri }}"></div>
+    <div>
+        <strong>Scan to pay {{ Rs::format($balance) }}</strong><br>
+        <span class="muted">Works with any UPI app — GPay, PhonePe, Paytm, BHIM.<br>UPI ID: {{ $property->upi_id }}</span>
+        @if ($invoice->payment_link_url)
+        <br><span class="muted">Or pay online: {{ $invoice->payment_link_url }}</span>
+        @endif
+        <br><span class="muted">After paying, share the UTR with the office.</span>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    (function () {
+        var el = document.getElementById('qr');
+        if (window.QRCode && el) { new QRCode(el, { text: el.dataset.uri, width: 264, height: 264, correctLevel: QRCode.CorrectLevel.M }); }
+    })();
+</script>
+@endif
 
 @if ($payments->count())
 <div class="box">
@@ -109,7 +143,7 @@
                 <td>{{ $payment->payment_method->getLabel() }}</td>
                 <td>{{ ucfirst($payment->payment_type->value) }}</td>
                 <td class="muted">{{ $payment->transaction_id ?? '—' }}</td>
-                <td class="num">₹{{ number_format((float) $payment->amount, 2) }}</td>
+                <td class="num">{{ Rs::format((float) $payment->amount) }}</td>
             </tr>
         @endforeach
         </tbody>
@@ -121,7 +155,7 @@
 <div class="box muted">{{ $invoice->notes }}</div>
 @endif
 
-<p class="muted" style="margin-top:32px;text-align:center">This is a computer-generated invoice from {{ $property?->name ?? 'BizStay PG' }} and does not require a signature.</p>
+<p class="muted" style="margin-top:32px;text-align:center">This is a computer-generated document from {{ $property?->name ?? 'BizStay PG' }} and does not require a signature.@if (! $isTaxInvoice) Residential PG rent — no GST charged.@endif</p>
 </body>
 </html>
 

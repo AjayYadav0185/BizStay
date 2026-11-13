@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\AttentionNeededWidget;
 use App\Filament\Widgets\DueInvoicesTable;
 use App\Filament\Widgets\OccupancyByFloorChart;
 use App\Filament\Widgets\OccupancyOverview;
@@ -15,7 +16,7 @@ class Dashboard extends BaseDashboard
 {
     protected static ?string $navigationIcon = 'heroicon-o-home-modern';
 
-    protected static ?string $title = 'Occupancy Dashboard';
+    protected static ?string $title = 'Dashboard';
 
     public function getColumns(): int|string|array
     {
@@ -28,6 +29,7 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
+            AttentionNeededWidget::class,
             StayMovementsTable::class,
             DueInvoicesTable::class,
             OccupancyByFloorChart::class,
@@ -45,4 +47,3 @@ class Dashboard extends BaseDashboard
         ];
     }
 }
-

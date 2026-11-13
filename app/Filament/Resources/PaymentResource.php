@@ -7,6 +7,7 @@ namespace App\Filament\Resources;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentType;
+use App\Filament\Concerns\LedgerDeletesAdminOnly;
 use App\Filament\Resources\PaymentResource\Pages;
 use App\Models\Payment;
 use Filament\Forms;
@@ -18,9 +19,14 @@ use Illuminate\Database\Eloquent\Builder;
 
 class PaymentResource extends Resource
 {
+    use LedgerDeletesAdminOnly;
+
     protected static ?string $model = Payment::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+
     protected static ?string $navigationGroup = 'Finance';
+
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form

@@ -8,6 +8,7 @@ use App\Enums\InquiryStatus;
 use App\Filament\Resources\InquiryResource\Pages;
 use App\Models\Inquiry;
 use App\Services\InquiryConversionService;
+use App\Support\Ncr;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -19,9 +20,13 @@ use Illuminate\Database\Eloquent\Builder;
 class InquiryResource extends Resource
 {
     protected static ?string $model = Inquiry::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-phone-arrow-up-right';
+
     protected static ?string $navigationGroup = 'Guests';
+
     protected static ?int $navigationSort = 3;
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Form $form): Form
@@ -33,7 +38,7 @@ class InquiryResource extends Resource
                     Forms\Components\TextInput::make('phone')->required()->tel()->maxLength(20),
                     Forms\Components\TextInput::make('email')->email()->maxLength(255),
                     Forms\Components\Select::make('gender')->options(['male' => 'Male', 'female' => 'Female', 'other' => 'Other'])->default('male'),
-                    Forms\Components\Select::make('source')->options(\App\Support\Gurgaon::inquirySources())->default('walk_in'),
+                    Forms\Components\Select::make('source')->options(Ncr::inquirySources())->default('walk_in'),
                     Forms\Components\TextInput::make('budget')->numeric()->prefix('₹')->minValue(0),
                     Forms\Components\TextInput::make('interested_in')->label('Interested in')->columnSpan(2),
                     Forms\Components\DatePicker::make('preferred_move_in')->native(false),

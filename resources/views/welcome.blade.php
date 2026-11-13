@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BizStay — PG Management System for Gurgaon | Properties, Tenants, Rent & More</title>
-<meta name="description" content="BizStay is a PG management software for Gurgaon. Manage properties, rooms & beds, tenants & KYC, inquiries, rent collection, expenses and complaints — with manager dashboard + Android app.">
+<title>BizStay — PG Management Software for Delhi NCR | Tenants, Rent, Police Verification & More</title>
+<meta name="description" content="BizStay is PG management software for Delhi NCR — Delhi, Gurugram, Noida, Greater Noida, Ghaziabad and Faridabad. Manage properties, rooms & beds, tenants & KYC, inquiries, rent collection, expenses and complaints — with manager dashboard + Android app.">
 <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32.png') }}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon-16.png') }}">
 <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/bizstay-logo-180.png') }}">
-<meta property="og:title" content="BizStay — PG Management System for Gurgaon">
+<meta property="og:title" content="BizStay — PG Management Software for Delhi NCR">
 <meta property="og:description" content="Properties, rooms & beds, tenants & KYC, rent, expenses and complaints — with manager dashboard + Android app.">
 <meta property="og:image" content="{{ asset('images/bizstay-og.png') }}">
 <meta name="theme-color" content="#1C1133">
@@ -95,7 +95,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid #f4
 <div aria-hidden="true" class="absolute -bottom-40 -left-24 w-64 h-64 sm:w-[420px] sm:h-[420px] rounded-full bg-sky-400/20 blur-3xl pointer-events-none"></div>
 <div class="relative max-w-7xl mx-auto px-4 pt-10 pb-12 sm:pt-14 sm:pb-16 lg:pt-20 lg:pb-24 grid gap-10 lg:gap-12 lg:grid-cols-2 items-center">
 <div class="min-w-0">
-<div class="inline-flex max-w-full flex-wrap items-center gap-2 glass rounded-full px-4 py-1.5 text-xs font-semibold mb-5">Built for Gurgaon PG owners <span class="bg-emerald-400 text-[#102a43] rounded-full px-2 py-0.5 font-extrabold">NEW</span></div>
+<div class="inline-flex max-w-full flex-wrap items-center gap-2 glass rounded-full px-4 py-1.5 text-xs font-semibold mb-5">Built for Delhi NCR PG owners <span class="bg-emerald-400 text-[#102a43] rounded-full px-2 py-0.5 font-extrabold">NEW</span></div>
 <h1 class="text-[2rem] leading-[1.1] sm:text-5xl lg:text-6xl font-extrabold sm:leading-[1.05]">Run your entire PG business from <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-300 to-amber-200">one dashboard.</span></h1>
 <p class="mt-4 sm:mt-5 text-slate-300 text-[15px] sm:text-lg leading-relaxed">BizStay is PG management software built with <strong class="text-white">Laravel + Filament</strong>. Properties, rooms and beds, tenants and KYC, inquiries, rent, expenses and complaints — with live occupancy.</p>
 <div class="mt-6 sm:mt-7 grid gap-3 sm:flex sm:flex-wrap">
@@ -153,7 +153,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid #f4
 <section id="properties" class="bg-white border-y border-slate-200 scroll-mt-24">
 <div class="max-w-7xl mx-auto px-4 py-14 sm:py-16 lg:py-20">
 <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-end sm:justify-between gap-3 sm:gap-4">
-<div><p class="text-xs font-extrabold tracking-widest text-[#e11d48] uppercase">Live in Gurgaon</p><h2 class="mt-2 text-[1.65rem] leading-tight sm:text-3xl font-extrabold text-[#102a43]">Seeded demo properties</h2></div>
+<div><p class="text-xs font-extrabold tracking-widest text-[#e11d48] uppercase">Live across Delhi NCR</p><h2 class="mt-2 text-[1.65rem] leading-tight sm:text-3xl font-extrabold text-[#102a43]">Seeded demo properties</h2></div>
 <a href="/admin" class="text-sm font-extrabold text-[#e11d48] py-1">Open admin panel -&gt;</a>
 </div>
 <div class="mt-6 sm:mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -272,7 +272,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid #f4
 </section>
 <footer class="bg-[#0b1f33] text-slate-300">
 <div class="max-w-7xl mx-auto px-4 py-10 sm:py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-sm">
-<div><div class="flex items-center gap-2"><img src="{{ asset('images/bizstay-logo.png') }}" alt="BizStay logo" class="w-9 h-9 rounded-xl object-cover" width="36" height="36"><span class="font-extrabold text-white">BizStay</span></div><p class="mt-3 text-slate-400">PG Management System for Gurgaon. Laravel + Filament. Sector 44, Sector 56, DLF Phase 3, Golf Course Road.</p></div>
+<div><div class="flex items-center gap-2"><img src="{{ asset('images/bizstay-logo.png') }}" alt="BizStay logo" class="w-9 h-9 rounded-xl object-cover" width="36" height="36"><span class="font-extrabold text-white">BizStay</span></div><p class="mt-3 text-slate-400">PG Management Software for Delhi NCR. Delhi · Gurugram · Noida · Greater Noida · Ghaziabad · Faridabad.</p></div>
 <div><p class="font-extrabold text-white mb-3">Product</p><ul class="space-y-2"><li><a href="#features" class="hover:text-white">Features</a></li><li><a href="#properties" class="hover:text-white">Properties</a></li><li><a href="#pricing" class="hover:text-white">Pricing</a></li><li><a href="#download-app" class="hover:text-white">Android APK</a></li></ul></div>
 <div><p class="font-extrabold text-white mb-3">Company</p><ul class="space-y-2"><li><a href="#how" class="hover:text-white">How it works</a></li><li><a href="#dashboard" class="hover:text-white">Dashboard</a></li><li><a href="#faq" class="hover:text-white">FAQ</a></li><li><a href="/admin" class="hover:text-white">Admin Login</a></li></ul></div>
 <div><p class="font-extrabold text-white mb-3">Contact</p><ul class="space-y-2 text-slate-400 break-words"><li>hello@bizstay.in</li><li>+91 880-2929-885 (Gurugram)</li><li>Gurugram</li></ul></div>

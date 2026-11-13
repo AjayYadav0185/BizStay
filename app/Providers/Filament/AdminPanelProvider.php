@@ -8,6 +8,10 @@ use App\Filament\Widgets\DueInvoicesTable;
 use App\Filament\Widgets\OccupancyByFloorChart;
 use App\Filament\Widgets\OccupancyOverview;
 use App\Filament\Widgets\StayMovementsTable;
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\AuthenticateSession;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color as SupportColors;
@@ -27,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(Login::class)
-            ->brandName('BizStay PG · Gurugram')
+            ->brandName('BizStay PG · Delhi NCR')
             ->brandLogo(asset('images/bizstay-logo.png'))
             ->brandLogoHeight('2.75rem')
             ->colors([
@@ -41,7 +45,9 @@ class AdminPanelProvider extends PanelProvider
                 'Guests',
                 'Finance',
                 'Operations',
+                'Settings',
             ])
+            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -59,15 +65,15 @@ class AdminPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
-                \Filament\Http\Middleware\AuthenticateSession::class,
+                AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
-                \Filament\Http\Middleware\DisableBladeIconComponents::class,
-                \Filament\Http\Middleware\DispatchServingFilamentEvent::class,
+                DisableBladeIconComponents::class,
+                DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                \Filament\Http\Middleware\Authenticate::class,
+                Authenticate::class,
             ]);
     }
 }

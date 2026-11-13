@@ -6,6 +6,8 @@ namespace App\Models;
 
 use App\Enums\BookingStatus;
 use App\Enums\KycStatus;
+use App\Enums\PoliceVerificationStatus;
+use Database\Factories\GuestFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -29,7 +31,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Guest extends Model
 {
-    /** @use HasFactory<\Database\Factories\GuestFactory> */
+    /** @use HasFactory<GuestFactory> */
     use HasFactory;
 
     use SoftDeletes;
@@ -38,10 +40,19 @@ class Guest extends Model
         'full_name', 'phone', 'alt_phone', 'email',
         'adhaar_number_hash', 'adhaar_last4', 'id_proof_type', 'id_proof_number',
         'kyc_status', 'kyc_documents', 'kyc_verified_at', 'kyc_remarks',
+        'police_verification_status', 'police_verification_ref', 'police_station',
+        'police_verification_submitted_on', 'police_verified_on',
         'gender', 'date_of_birth', 'permanent_address', 'home_city',
         'occupation', 'company_name',
         'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
         'is_blacklisted', 'notes',
+    ];
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'police_verification_status' => 'not_submitted',
     ];
 
     /**
@@ -53,6 +64,9 @@ class Guest extends Model
             'kyc_status' => KycStatus::class,
             'kyc_documents' => 'array',
             'kyc_verified_at' => 'datetime',
+            'police_verification_status' => PoliceVerificationStatus::class,
+            'police_verification_submitted_on' => 'date',
+            'police_verified_on' => 'date',
             'date_of_birth' => 'date',
             'is_blacklisted' => 'boolean',
         ];
@@ -81,6 +95,57 @@ class Guest extends Model
     public function complaints(): HasMany
     {
         return $this->hasMany(Complaint::class);
+    }
+
+    public function visitors(): HasMany
+    {
+        return $this->hasMany(Visitor::class);
+    }
+
+    public function appLogin(): HasOne
+    {
+        return $this->hasOne(User::class);
+    }
+
+    /**
+     * Residents living in the house whose police verification is still open.
+     *
+     * @param  Builder<Guest>  $query
+     * @return Builder<Guest>
+     */
+    public function scopePoliceVerificationPending(Builder $query): Builder
+    {
+        return $query->whereIn('police_verification_status', [
+            PoliceVerificationStatus::NotSubmitted->value,
+            PoliceVerificationStatus::Submitted->value,
+        ]);
+    }
+
+    /**
+     * Indian mobile number in international form for wa.me / tel: links.
+     */
+    public function whatsappNumber(): ?string
+    {
+        return static::toWhatsappNumber($this->phone);
+    }
+
+    public static function toWhatsappNumber(?string $phone): ?string
+    {
+        $digits = preg_replace('/\D/', '', (string) $phone) ?? '';
+
+        if (strlen($digits) === 10) {
+            return '91'.$digits;
+        }
+
+        if (strlen($digits) === 12 && str_starts_with($digits, '91')) {
+            return $digits;
+        }
+
+        if (strlen($digits) === 11 && str_starts_with($digits, '0')) {
+            return '91'.substr($digits, 1);
+        }
+
+        return null;
     }
 
     /**

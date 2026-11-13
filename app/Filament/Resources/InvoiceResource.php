@@ -6,9 +6,11 @@ namespace App\Filament\Resources;
 
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentMethod;
+use App\Filament\Concerns\LedgerDeletesAdminOnly;
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Models\Invoice;
 use App\Services\InvoiceService;
+use App\Services\RazorpayService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -19,9 +21,14 @@ use Illuminate\Database\Eloquent\Builder;
 
 class InvoiceResource extends Resource
 {
+    use LedgerDeletesAdminOnly;
+
     protected static ?string $model = Invoice::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-document-currency-rupee';
+
     protected static ?string $navigationGroup = 'Finance';
+
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
@@ -37,7 +44,7 @@ class InvoiceResource extends Resource
                     Forms\Components\TextInput::make('maintenance_charges')->numeric()->prefix('₹'),
                     Forms\Components\TextInput::make('food_deduction')->numeric()->prefix('₹'),
                     Forms\Components\TextInput::make('other_charges')->numeric()->prefix('₹'),
-                    Forms\Components\TextInput::make('gst_percent')->label('GST %')->numeric()->suffix('%')->helperText('Hotel: 12% ≤₹7,500/night, 18% above. PG: 0%'),
+                    Forms\Components\TextInput::make('gst_percent')->label('GST %')->numeric()->suffix('%')->helperText('Hotel / short stay: 5% up to ₹7,500 per night, 18% above (GST 2.0). Residential PG rent: 0%'),
                     Forms\Components\TextInput::make('gst_amount')->label('GST amount')->numeric()->prefix('₹'),
                     Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
                 ]),
@@ -62,30 +69,78 @@ class InvoiceResource extends Resource
                 Tables\Filters\Filter::make('outstanding')->label('Outstanding only')->query(fn (Builder $query): Builder => $query->outstanding())->default(),
             ])
             ->actions([
-                Tables\Actions\Action::make('print')
-                    ->label('Print')
-                    ->icon('heroicon-o-printer')
-                    ->url(fn (Invoice $record): string => route('invoices.print', ['invoice' => $record->id]))
-                    ->openUrlInNewTab(),
-                Tables\Actions\Action::make('remind')
-                    ->label('Remind')
-                    ->icon('heroicon-o-bell-alert')
-                    ->color('warning')
-                    ->visible(fn (Invoice $r): bool => $r->isOverdue() && $r->balanceDue() > 0)
-                    ->action(function (Invoice $record): void {
-                        app(InvoiceService::class)->markReminded($record, 'manual');
-
-                        Notification::make()
-                            ->title('Reminder logged')
-                            ->body($record->invoice_number.' — '.($record->booking?->guest?->full_name ?? 'guest').' reminded of ₹'.number_format($record->balanceDue()).' outstanding.')
-                            ->success()
-                            ->send();
+                Tables\Actions\Action::make('collect')
+                    ->label('Collect')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('success')
+                    ->visible(fn (Invoice $r): bool => $r->balanceDue() > 0)
+                    ->form([
+                        Forms\Components\TextInput::make('amount')
+                            ->numeric()
+                            ->prefix('₹')
+                            ->required()
+                            ->minValue(1)
+                            ->default(fn (Invoice $r): float => $r->balanceDue())
+                            ->maxValue(fn (Invoice $r): float => $r->balanceDue()),
+                        Forms\Components\Select::make('payment_method')->options(PaymentMethod::collectionOptions())->default('upi')->required()->live(),
+                        Forms\Components\TextInput::make('transaction_id')
+                            ->label('UTR / reference')
+                            ->required(fn (Forms\Get $get): bool => PaymentMethod::tryFrom((string) $get('payment_method'))?->requiresTransactionId() ?? false)
+                            ->unique('payments', 'transaction_id'),
+                        Forms\Components\DatePicker::make('paid_on')->default(now())->required()->maxDate(now())->native(false),
+                    ])
+                    ->action(function (Invoice $record, array $data): void {
+                        app(InvoiceService::class)->recordPayment($record, $data);
+                        Notification::make()->title('Payment recorded')->body('₹'.number_format((float) $data['amount']).' against '.$record->invoice_number)->success()->send();
                     }),
-                Tables\Actions\Action::make('collect')->label('Collect')->icon('heroicon-o-banknotes')->color('success')->visible(fn (Invoice $r): bool => $r->balanceDue() > 0)->form([Forms\Components\TextInput::make('amount')->numeric()->prefix('₹')->required()->default(fn (Invoice $r): float => $r->balanceDue()), Forms\Components\Select::make('payment_method')->options(PaymentMethod::collectionOptions())->default('upi')->required(), Forms\Components\TextInput::make('transaction_id')->label('UTR'), Forms\Components\DatePicker::make('paid_on')->default(now())->required()->native(false)])->action(function (Invoice $record, array $data): void {
-                    app(InvoiceService::class)->recordPayment($record, $data);
-                    Notification::make()->title('Payment recorded')->success()->send();
-                }),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('whatsapp')
+                    ->label('WhatsApp')
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->color('success')
+                    ->tooltip('Opens WhatsApp with the reminder, UPI ID / pay link pre-filled, and logs the reminder')
+                    ->visible(fn (Invoice $r): bool => $r->balanceDue() > 0 && $r->booking?->guest?->whatsappNumber() !== null)
+                    ->url(fn (Invoice $r): string => route('invoices.whatsapp', $r))
+                    ->openUrlInNewTab(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('print')
+                        ->label('Print')
+                        ->icon('heroicon-o-printer')
+                        ->url(fn (Invoice $record): string => route('invoices.print', ['invoice' => $record->id]))
+                        ->openUrlInNewTab(),
+                    Tables\Actions\Action::make('payLink')
+                        ->label('Pay link')
+                        ->icon('heroicon-o-link')
+                        ->color('info')
+                        ->visible(fn (Invoice $r): bool => $r->balanceDue() > 0 && app(RazorpayService::class)->isEnabled())
+                        ->requiresConfirmation()
+                        ->modalDescription('Creates a Razorpay link for the current balance. When the resident pays, the payment is posted here automatically.')
+                        ->action(function (Invoice $record): void {
+                            try {
+                                $url = app(RazorpayService::class)->paymentLinkFor($record);
+                            } catch (\RuntimeException $exception) {
+                                Notification::make()->title('Could not create link')->body($exception->getMessage())->danger()->send();
+
+                                return;
+                            }
+
+                            Notification::make()->title('Payment link ready')->body($url)->success()->persistent()->send();
+                        }),
+                    Tables\Actions\Action::make('remind')
+                        ->label('Log reminder')
+                        ->icon('heroicon-o-bell-alert')
+                        ->color('warning')
+                        ->visible(fn (Invoice $r): bool => $r->isOverdue() && $r->balanceDue() > 0)
+                        ->action(function (Invoice $record): void {
+                            app(InvoiceService::class)->markReminded($record, 'manual');
+
+                            Notification::make()
+                                ->title('Reminder logged')
+                                ->body($record->invoice_number.' — '.($record->booking?->guest?->full_name ?? 'guest').' reminded of ₹'.number_format($record->balanceDue()).' outstanding.')
+                                ->success()
+                                ->send();
+                        }),
+                    Tables\Actions\EditAction::make(),
+                ]),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('generate')->label('Generate cycle')->icon('heroicon-o-document-plus')->requiresConfirmation()->action(function (): void {

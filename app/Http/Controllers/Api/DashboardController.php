@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Bed;
 use App\Models\Booking;
+use App\Models\Complaint;
+use App\Models\Guest;
+use App\Models\Inquiry;
 use App\Models\Invoice;
 use App\Models\Property;
+use App\Models\Visitor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,9 +26,9 @@ final class DashboardController
     {
         $property = Property::current();
 
-        $totalBeds = \App\Models\Bed::query()->count();
-        $occupiedBeds = \App\Models\Bed::query()->where('status', 'occupied')->count();
-        $freeBeds = \App\Models\Bed::query()->where('status', 'available')->count();
+        $totalBeds = Bed::query()->count();
+        $occupiedBeds = Bed::query()->where('status', 'occupied')->count();
+        $freeBeds = Bed::query()->where('status', 'available')->count();
 
         $due = (float) Invoice::query()
             ->whereIn('status', ['unpaid', 'partially_paid', 'overdue'])
@@ -33,11 +38,14 @@ final class DashboardController
             ->sum('amount_paid');
 
         $overdue = Invoice::query()->overdue()->count();
-        $openComplaints = \App\Models\Complaint::query()->open()->count();
-        $openInquiries = \App\Models\Inquiry::query()->open()->count();
+        $openComplaints = Complaint::query()->open()->count();
+        $openInquiries = Inquiry::query()->open()->count();
         $liveStays = Booking::query()->live()->count();
 
-        $pnl = $property?->monthlyPnL(now()) ?? ['collected' => 0, 'expenses' => 0, 'profit' => 0];
+        // Wardens / front-desk staff run the house but do not see the owner's P&L.
+        $pnl = $request->user()->canManageFinance()
+            ? ($property?->monthlyPnL(now()) ?? ['collected' => 0, 'expenses' => 0, 'profit' => 0])
+            : null;
 
         return response()->json([
             'property' => $property ? [
@@ -49,7 +57,12 @@ final class DashboardController
             'beds' => ['total' => $totalBeds, 'occupied' => $occupiedBeds, 'free' => $freeBeds],
             'stays' => ['live' => $liveStays],
             'dues' => ['outstanding' => round($due - $paid, 2), 'overdue_invoices' => $overdue],
-            'ops' => ['open_complaints' => $openComplaints, 'open_inquiries' => $openInquiries],
+            'ops' => [
+                'open_complaints' => $openComplaints,
+                'open_inquiries' => $openInquiries,
+                'visitors_inside' => Visitor::query()->inside()->count(),
+                'police_verification_pending' => Guest::query()->staying()->policeVerificationPending()->count(),
+            ],
             'pnl' => $pnl,
         ]);
     }

@@ -6,6 +6,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\ExpenseCategory;
 use App\Enums\PaymentMethod;
+use App\Filament\Concerns\RestrictedToFinance;
 use App\Filament\Resources\ExpenseResource\Pages;
 use App\Models\Expense;
 use Filament\Forms;
@@ -17,9 +18,14 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ExpenseResource extends Resource
 {
+    use RestrictedToFinance;
+
     protected static ?string $model = Expense::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-wallet';
+
     protected static ?string $navigationGroup = 'Finance';
+
     protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form

@@ -11,6 +11,7 @@ use App\Filament\Resources\RoomResource\RelationManagers\BedsRelationManager;
 use App\Models\Room;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -77,7 +78,7 @@ class RoomResource extends Resource
                             ->prefix('₹')
                             ->suffix('/ night')
                             ->minValue(0)
-                            ->helperText('Only for PG + Hotel properties. ≤₹7,500 → 12% GST, above → 18%'),
+                            ->helperText('Only for PG + Hotel properties. up to ₹7,500 → 5% GST, above → 18% (GST 2.0)'),
                         Forms\Components\TextInput::make('security_deposit_default')
                             ->label('Deposit (months)')
                             ->numeric()
@@ -202,7 +203,7 @@ class RoomResource extends Resource
     }
 
     /**
-     * @return array<string, \Filament\Resources\Pages\PageRegistration>
+     * @return array<string, PageRegistration>
      */
     public static function getPages(): array
     {

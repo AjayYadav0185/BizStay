@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Enums\KycStatus;
+use App\Enums\PropertyType;
 use App\Enums\SharingType;
+use App\Models\Bed;
+use App\Models\Booking;
 use App\Models\Guest;
 use App\Models\Property;
 use App\Models\Room;
 use App\Models\User;
+use App\Models\Visitor;
 use App\Services\BedAllocationService;
 use Illuminate\Database\Seeder;
 
@@ -22,9 +26,9 @@ class DemoSeeder extends Seeder
     public function run(): void
     {
         $staff = [
-            ['email' => 'admin@mail.com', 'name' => 'BizStay Admin', 'role' => 'manager'],
+            ['email' => 'admin@mail.com', 'name' => 'BizStay Owner', 'role' => 'admin'],
             ['email' => 'manager@mail.com', 'name' => 'Rakesh Dutta (Property Manager)', 'role' => 'manager'],
-            ['email' => 'warden@mail.com', 'name' => 'Suresh Nair (Night Warden)', 'role' => 'manager'],
+            ['email' => 'warden@mail.com', 'name' => 'Suresh Nair (Night Warden)', 'role' => 'staff'],
         ];
         foreach ($staff as $row) {
             User::query()->firstOrCreate(
@@ -39,7 +43,7 @@ class DemoSeeder extends Seeder
             $property = Property::query()->create([
                 'name' => 'BizStay Homes — Sector 44',
                 'code' => 'BSH-44',
-                'type' => \App\Enums\PropertyType::CoLive,
+                'type' => PropertyType::CoLive,
                 'address' => 'Plot 12, HUDA Staff Colony',
                 'locality' => 'Sector 44',
                 'city' => 'Gurugram',
@@ -50,6 +54,10 @@ class DemoSeeder extends Seeder
                 'check_in_time' => '12:00',
                 'check_out_time' => '11:00',
                 'manager_name' => 'Duty Manager',
+                'owner_name' => 'Rajesh Kumar Yadav',
+                'owner_pan' => 'ABCPY1234K',
+                'whatsapp_number' => '9999900001',
+                'amenities' => ['High-Speed WiFi', 'Power Backup', 'Meals Included', 'CCTV Security', 'Housekeeping', 'RO Water', 'Biometric Entry', 'Near Metro'],
                 'contact_phone' => '9999900001',
                 'total_floors' => 3,
                 'security_deposit_months' => 1,
@@ -87,7 +95,7 @@ class DemoSeeder extends Seeder
 
         $names = ['Aarav Sharma', 'Rohan Verma', 'Sahil Khan', 'Neha Gupta', 'Priya Singh'];
         $alloc = app(BedAllocationService::class);
-        $beds = \App\Models\Bed::query()->where('status', 'available')->orderBy('bed_code')->get();
+        $beds = Bed::query()->where('status', 'available')->orderBy('bed_code')->get();
         foreach ($names as $i => $name) {
             if (! isset($beds[$i])) {
                 break;
@@ -95,8 +103,12 @@ class DemoSeeder extends Seeder
             $guest = Guest::query()->firstOrCreate(['phone' => '98'.str_pad((string) (10000001 + $i), 8, '0', STR_PAD_LEFT)], [
                 'full_name' => $name,
                 'kyc_status' => KycStatus::Verified->value,
+                // A realistic mix so the compliance tiles have something to show.
+                'police_verification_status' => ['verified', 'verified', 'submitted', 'not_submitted', 'verified'][$i],
+                'police_verified_on' => in_array($i, [0, 1, 4], true) ? now()->subDays(5)->toDateString() : null,
+                'police_verification_submitted_on' => $i === 2 ? now()->subDays(2)->toDateString() : null,
             ]);
-            if (\App\Models\Booking::query()->where('guest_id', $guest->id)->live()->exists()) {
+            if (Booking::query()->where('guest_id', $guest->id)->live()->exists()) {
                 // still make sure a tenant login exists for the app demo
             } else {
                 $alloc->allocate($guest, $beds[$i]->id, [
@@ -111,12 +123,19 @@ class DemoSeeder extends Seeder
                 [
                     'name' => $guest->full_name,
                     'email' => $guest->phone.'@tenant.mail.com',
+                    'phone' => $guest->phone,
                     'password' => 'password',
                     'role' => 'tenant',
                 ]
             );
         }
 
-        $this->command?->info('Demo seed: manager admin@mail.com / password, tenant login 9810000001 / password, '.count($rooms).' rooms ready.');
+        if (Visitor::query()->doesntExist()) {
+            $first = Guest::query()->orderBy('id')->first();
+            Visitor::query()->create(['guest_id' => $first?->id, 'visitor_name' => 'Sunita Sharma', 'visitor_phone' => '9811122233', 'relation' => 'Parent', 'purpose' => 'Family visit', 'checked_in_at' => now()->subHour()]);
+            Visitor::query()->create(['guest_id' => null, 'visitor_name' => 'Ramesh (Electrician)', 'visitor_phone' => '9876501234', 'relation' => 'Service / repair', 'purpose' => 'Geyser repair Room 201', 'checked_in_at' => now()->subHours(5), 'checked_out_at' => now()->subHours(4)]);
+        }
+
+        $this->command?->info('Demo seed: owner admin@mail.com / password, manager manager@mail.com, warden warden@mail.com, tenant login 9810000001 / password, '.count($rooms).' rooms ready.');
     }
 }

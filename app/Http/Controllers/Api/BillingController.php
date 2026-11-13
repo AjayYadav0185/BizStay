@@ -9,7 +9,9 @@ use App\Models\Booking;
 use App\Models\Guest;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\Property;
 use App\Services\InvoiceService;
+use App\Services\RazorpayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -19,7 +21,7 @@ final class BillingController
     {
         $query = Invoice::query()->with(['booking.guest', 'booking.bed.room']);
 
-        if ($request->user()->isTenant() && $request->user()->guest_id) {
+        if ($request->user()->isTenant()) {
             $bookingIds = Booking::query()->where('guest_id', $request->user()->guest_id)->select('id');
             $query->whereIn('booking_id', $bookingIds);
         }
@@ -53,7 +55,33 @@ final class BillingController
             'balance' => $i->balanceDue(),
             'due_date' => $i->due_date?->toDateString(),
             'status' => $i->status->value,
+            'pay_link' => $i->payment_link_url,
         ]));
+    }
+
+    /**
+     * Online payment link for an invoice's balance (Razorpay). Tenants may
+     * only request links for their own invoices.
+     */
+    public function payLink(Request $request, Invoice $invoice, RazorpayService $razorpay): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->isTenant()) {
+            abort_unless((int) $invoice->booking?->guest_id === (int) $user->guest_id, 404);
+        }
+
+        if (! $razorpay->isEnabled()) {
+            return response()->json(['message' => 'Online payment is not enabled for this property. Pay by UPI and share the UTR with the office.'], 422);
+        }
+
+        try {
+            $url = $razorpay->paymentLinkFor($invoice);
+        } catch (\RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+
+        return response()->json(['url' => $url, 'amount' => $invoice->balanceDue()]);
     }
 
     public function collect(Request $request, Invoice $invoice, InvoiceService $service): JsonResponse
@@ -87,7 +115,7 @@ final class BillingController
         abort_unless($guest instanceof Guest, 404, 'No guest linked to this login.');
         $guest->loadMissing(['currentBooking.bed.room', 'bookings']);
 
-        $property = \App\Models\Property::current();
+        $property = Property::current();
 
         $due = Invoice::query()
             ->whereIn('booking_id', $guest->bookings()->select('id'))
@@ -104,6 +132,7 @@ final class BillingController
             'property' => $property ? [
                 'name' => $property->name,
                 'upi_id' => $property->upi_id,
+                'whatsapp' => $property->whatsapp_number ?? $property->contact_phone,
                 'gstin' => $property->gstin,
                 'check_in_time' => $property->check_in_time,
                 'check_out_time' => $property->check_out_time,
@@ -114,7 +143,10 @@ final class BillingController
                 'total_due' => (float) $due->total_due,
                 'balance' => $due->balanceDue(),
                 'due_date' => $due->due_date?->toDateString(),
+                'upi_uri' => $property?->upiPaymentUri($due->balanceDue(), 'Rent '.$due->invoice_number),
+                'pay_link' => $due->payment_link_url,
             ] : null,
+            'online_payments' => app(RazorpayService::class)->isEnabled(),
             'payments' => Payment::query()
                 ->whereIn('booking_id', $guest->bookings()->select('id'))
                 ->settled()->orderByDesc('paid_on')->limit(10)
