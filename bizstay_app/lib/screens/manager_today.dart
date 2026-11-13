@@ -11,10 +11,12 @@ class ManagerToday extends StatefulWidget {
       {super.key,
       required this.onLogout,
       required this.name,
+      this.roleLabel = 'Manager',
       this.onGoTab});
 
   final VoidCallback onLogout;
   final String name;
+  final String roleLabel;
   final void Function(int tab)? onGoTab;
 
   @override
@@ -53,6 +55,8 @@ class _ManagerTodayState extends State<ManagerToday> {
           final beds = (d['beds'] as Map<String, dynamic>?) ?? {};
           final dues = (d['dues'] as Map<String, dynamic>?) ?? {};
           final ops = (d['ops'] as Map<String, dynamic>?) ?? {};
+          // Null for wardens: the owner's P&L is not shown to staff.
+          final hasPnl = d['pnl'] is Map;
           final pnl = (d['pnl'] as Map<String, dynamic>?) ?? {};
           final stays = (d['stays'] as Map<String, dynamic>?) ?? {};
           final bedsTotal = (beds['total'] as num?)?.toInt() ?? 0;
@@ -67,6 +71,10 @@ class _ManagerTodayState extends State<ManagerToday> {
           final openComplaints =
               (ops['open_complaints'] as num?)?.toInt() ?? 0;
           final openLeads = (ops['open_inquiries'] as num?)?.toInt() ?? 0;
+          final visitorsInside =
+              (ops['visitors_inside'] as num?)?.toInt() ?? 0;
+          final policePending =
+              (ops['police_verification_pending'] as num?)?.toInt() ?? 0;
           final liveStays = (stays['live'] as num?)?.toInt() ?? 0;
           return RefreshIndicator(
             onRefresh: () async {
@@ -92,10 +100,11 @@ class _ManagerTodayState extends State<ManagerToday> {
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
                 sliver: SliverList.list(children: [
-                  _MoneyRow(
-                      collected: collected,
-                      expenses: expenses,
-                      profit: profit),
+                  if (hasPnl)
+                    _MoneyRow(
+                        collected: collected,
+                        expenses: expenses,
+                        profit: profit),
                   SectionHeader('Attention needed',
                       action: overdueCt > 0
                           ? CountPill('$overdueCt overdue')
@@ -105,12 +114,14 @@ class _ManagerTodayState extends State<ManagerToday> {
                     openLeads: openLeads,
                     overdueCt: overdueCt,
                     liveStays: liveStays,
+                    visitorsInside: visitorsInside,
+                    policePending: policePending,
                     onGoTab: widget.onGoTab,
                   ),
                   SectionHeader('Quick actions'),
                   _QuickGrid(onGoTab: widget.onGoTab),
                   const SizedBox(height: 16),
-                  Text('Signed in as ${widget.name}',
+                  Text('Signed in as ${widget.name} • ${widget.roleLabel}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                           color: Colors.black38, fontSize: 12)),
@@ -409,11 +420,15 @@ class _AttentionRow extends StatelessWidget {
       required this.openLeads,
       required this.overdueCt,
       required this.liveStays,
+      this.visitorsInside = 0,
+      this.policePending = 0,
       this.onGoTab});
   final int openComplaints;
   final int openLeads;
   final int overdueCt;
   final int liveStays;
+  final int visitorsInside;
+  final int policePending;
   final void Function(int tab)? onGoTab;
 
   @override
@@ -492,6 +507,19 @@ class _AttentionRow extends StatelessWidget {
             BizStayColors.slate100, 1),
         tile('New leads', '$openLeads',
             Icons.person_add_alt_outlined,
+            BizStayColors.info,
+            BizStayColors.infoBg, 4),
+        tile('Police verif. pending', '$policePending',
+            Icons.local_police_outlined,
+            policePending > 0
+                ? BizStayColors.errorDark
+                : BizStayColors.navy900,
+            policePending > 0
+                ? BizStayColors.errorBg
+                : BizStayColors.slate100,
+            2),
+        tile('Visitors inside', '$visitorsInside',
+            Icons.badge_outlined,
             BizStayColors.info,
             BizStayColors.infoBg, 4),
       ],

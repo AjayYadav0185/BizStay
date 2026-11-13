@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\InquiryStatus;
 use App\Models\Complaint;
 use App\Models\Inquiry;
 use App\Models\Visitor;
+use App\Support\Ncr;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -86,6 +88,59 @@ final class OpsController
             'out' => $v->checked_out_at?->toIso8601String(),
             'overnight' => $v->is_overnight,
         ]));
+    }
+
+    public function storeVisitor(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'visitor_name' => ['required', 'string', 'max:255'],
+            'visitor_phone' => ['nullable', 'string', 'max:20'],
+            'guest_id' => ['nullable', 'exists:guests,id'],
+            'relation' => ['nullable', 'string', 'max:40'],
+            'purpose' => ['nullable', 'string', 'max:255'],
+            'id_proof' => ['nullable', 'string', 'max:60'],
+            'is_overnight' => ['nullable', 'boolean'],
+        ]);
+
+        $visitor = Visitor::query()->create($data + [
+            'checked_in_at' => now(),
+            'is_overnight' => (bool) ($data['is_overnight'] ?? false),
+            'logged_by' => $request->user()->id,
+        ]);
+
+        return response()->json(['id' => $visitor->id], 201);
+    }
+
+    public function checkoutVisitor(Visitor $visitor): JsonResponse
+    {
+        $visitor->checkOut();
+
+        return response()->json(['id' => $visitor->id, 'out' => $visitor->checked_out_at?->toIso8601String()]);
+    }
+
+    public function storeInquiry(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'phone' => ['required', 'string', 'max:20'],
+            'gender' => ['nullable', 'in:male,female,other'],
+            'source' => ['nullable', 'in:'.implode(',', array_keys(Ncr::inquirySources()))],
+            'budget' => ['nullable', 'numeric', 'min:0'],
+            'interested_in' => ['nullable', 'string', 'max:120'],
+            'preferred_move_in' => ['nullable', 'date'],
+            'follow_up_date' => ['nullable', 'date'],
+            'message' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $inquiry = Inquiry::query()->create($data + [
+            'gender' => $data['gender'] ?? 'male',
+            'source' => $data['source'] ?? 'walk_in',
+            'status' => InquiryStatus::New,
+            'follow_up_date' => $data['follow_up_date'] ?? now()->addDay()->toDateString(),
+            'assigned_to' => $request->user()->id,
+        ]);
+
+        return response()->json(['id' => $inquiry->id], 201);
     }
 
     public function inquiries(Request $request): JsonResponse

@@ -42,9 +42,13 @@ Route::middleware(['auth:sanctum', EnsureTenantLinked::class])->group(function (
         Route::get('/bookings', [StayController::class, 'bookings']);
 
         Route::post('/invoices/{invoice}/collect', [BillingController::class, 'collect']);
+        Route::post('/invoices/{invoice}/remind', [BillingController::class, 'remind']);
 
         Route::get('/dashboard', DashboardController::class);
         Route::get('/inquiries', [OpsController::class, 'inquiries']);
+        Route::post('/inquiries', [OpsController::class, 'storeInquiry']);
         Route::get('/visitors', [OpsController::class, 'visitors']);
+        Route::post('/visitors', [OpsController::class, 'storeVisitor']);
+        Route::post('/visitors/{visitor}/checkout', [OpsController::class, 'checkoutVisitor']);
     });
 });

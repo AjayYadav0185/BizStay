@@ -1,0 +1,8 @@
+# Serve the Android app with the right type so phones offer to install it.
+AddType application/vnd.android.package-archive .apk
+<IfModule mod_headers.c>
+    <FilesMatch "\.apk$">
+        Header set Content-Disposition "attachment; filename=BizStay.apk"
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>

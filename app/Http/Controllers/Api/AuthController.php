@@ -67,6 +67,8 @@ final class AuthController
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->roleOrDefault()->value,
+            'role_label' => $user->roleOrDefault()->getLabel(),
+            'can_manage_finance' => $user->canManageFinance(),
             'guest' => $user->guest ? [
                 'id' => $user->guest->id,
                 'full_name' => $user->guest->full_name,

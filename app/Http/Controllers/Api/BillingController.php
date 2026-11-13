@@ -12,6 +12,7 @@ use App\Models\Payment;
 use App\Models\Property;
 use App\Services\InvoiceService;
 use App\Services\RazorpayService;
+use App\Support\WhatsApp;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -39,6 +40,8 @@ final class BillingController
         });
 
         $invoices = $query->orderByDesc('due_date')->paginate(30);
+        $isStaff = $request->user()->isStaff();
+        $property = Property::current();
 
         return response()->json($invoices->through(fn (Invoice $i) => [
             'id' => $i->id,
@@ -56,7 +59,27 @@ final class BillingController
             'due_date' => $i->due_date?->toDateString(),
             'status' => $i->status->value,
             'pay_link' => $i->payment_link_url,
+            'phone' => $isStaff ? $i->booking?->guest?->phone : null,
+            'last_reminded' => $isStaff ? $i->last_reminded_at?->toDateString() : null,
+            'upi_uri' => $i->balanceDue() > 0 ? $property?->upiPaymentUri($i->balanceDue(), 'Rent '.$i->invoice_number) : null,
         ]));
+    }
+
+    /**
+     * Logs a WhatsApp reminder and returns the wa.me link with the message
+     * pre-filled; the app opens it in WhatsApp.
+     */
+    public function remind(Invoice $invoice, InvoiceService $service): JsonResponse
+    {
+        $url = WhatsApp::link($invoice->booking?->guest?->phone, WhatsApp::rentReminder($invoice));
+
+        if ($url === null) {
+            return response()->json(['message' => 'This resident has no valid Indian mobile number.'], 422);
+        }
+
+        $service->markReminded($invoice, 'whatsapp');
+
+        return response()->json(['url' => $url]);
     }
 
     /**

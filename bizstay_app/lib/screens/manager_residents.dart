@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api_service.dart';
+import '../links.dart';
 import '../theme/bizstay_colors.dart';
 import '../widgets/biz.dart';
 import '../widgets/bizstay_ui.dart';
@@ -91,45 +92,67 @@ class _ManagerResidentsState extends State<ManagerResidents> {
                   itemBuilder: (context, i) {
                     final g = rows[i];
                     final due = ApiService.numOf(g['outstanding']);
+                    final police = '${g['police_verification'] ?? ''}';
+                    final phone = '${g['phone'] ?? ''}';
                     return Card(
-                      margin:
-                          const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                            backgroundColor:
-                                BizStayColors.navy900,
-                            child: Text(
-                                (g['full_name'] ?? '?')
-                                    .toString()
-                                    .substring(0, 1)
-                                    .toUpperCase(),
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight:
-                                        FontWeight.w800))),
-                        title: Text(
-                            '${g['full_name'] ?? ''}'),
-                        subtitle: Text(
-                            '${g['phone'] ?? ''} • Bed ${g['bed'] ?? '—'} • Room ${g['room'] ?? '—'}'),
-                        trailing: Column(
-                            mainAxisSize:
-                                MainAxisSize.min,
-                            crossAxisAlignment:
-                                CrossAxisAlignment.end,
-                            children: [
-                              StatusChip(
-                                  '${g['kyc_status'] ?? ''}'),
-                              const SizedBox(height: 4),
-                              MoneyText(
-                                  Biz.money(due),
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      color: due > 0
-                                          ? BizStayColors
-                                              .errorDark
-                                          : BizStayColors
-                                              .successDark)),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+                        child: Column(children: [
+                          ListTile(
+                            leading: CircleAvatar(
+                                backgroundColor: BizStayColors.navy900,
+                                child: Text(
+                                    (g['full_name'] ?? '?')
+                                        .toString()
+                                        .substring(0, 1)
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800))),
+                            title: Text('${g['full_name'] ?? ''}'),
+                            subtitle: Text(
+                                '$phone • Bed ${g['bed'] ?? '—'} • Room ${g['room'] ?? '—'}'),
+                            trailing: MoneyText(Biz.money(due),
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    color: due > 0
+                                        ? BizStayColors.errorDark
+                                        : BizStayColors.successDark)),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 4, 4),
+                            child: Row(children: [
+                              StatusChip('KYC ${g['kyc_status'] ?? ''}',
+                                  color: BizStayColors.statusColor(
+                                      '${g['kyc_status'] ?? ''}')),
+                              const SizedBox(width: 6),
+                              if (police.isNotEmpty)
+                                StatusChip(_policeLabel(police),
+                                    color: police == 'verified'
+                                        ? BizStayColors.successDark
+                                        : police == 'submitted'
+                                            ? BizStayColors.warning
+                                            : BizStayColors.errorDark),
+                              const Spacer(),
+                              if (phone.isNotEmpty) ...[
+                                IconButton(
+                                    tooltip: 'Call',
+                                    icon: const Icon(Icons.call_outlined),
+                                    onPressed: () =>
+                                        Links.call(context, phone)),
+                                IconButton(
+                                    tooltip: 'WhatsApp',
+                                    icon: const Icon(Icons.chat_outlined,
+                                        color: Color(0xFF25D366)),
+                                    onPressed: () => Links.open(
+                                        context, Links.whatsapp(phone),
+                                        failMessage:
+                                            'WhatsApp is not installed.')),
+                              ],
                             ]),
+                          ),
+                        ]),
                       ),
                     );
                   },
@@ -142,3 +165,10 @@ class _ManagerResidentsState extends State<ManagerResidents> {
     );
   }
 }
+
+String _policeLabel(String status) => switch (status) {
+      'verified' => 'Police ✓',
+      'submitted' => 'Police submitted',
+      'rejected' => 'Police rejected',
+      _ => 'Police pending',
+    };

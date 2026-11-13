@@ -32,6 +32,7 @@ class _ManagerShellState extends State<ManagerShell> {
       ManagerToday(
           onLogout: _logout,
           name: widget.session.name,
+          roleLabel: widget.session.roleLabel,
           onGoTab: (i) => setState(() => _tab = i)),
       const ManagerRooms(),
       const ManagerResidents(),

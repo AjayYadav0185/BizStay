@@ -121,7 +121,7 @@ class SectionHeader extends StatelessWidget {
           child: Text(title.toUpperCase(),
               style: Theme.of(context).textTheme.labelSmall),
         ),
-        if (action != null) action!,
+        ?action,
       ]),
     );
   }
@@ -163,7 +163,7 @@ class HeroHeader extends StatelessWidget {
                       fontSize: 13, color: Colors.white70)),
           ]),
         ),
-        if (trailing != null) trailing!,
+        ?trailing,
       ]),
     );
   }

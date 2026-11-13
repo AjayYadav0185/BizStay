@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api_service.dart';
+import '../links.dart';
 import '../theme/bizstay_colors.dart';
 import '../widgets/biz.dart';
 import '../widgets/bizstay_ui.dart';
@@ -160,6 +161,20 @@ class _ManagerBillingState extends State<ManagerBilling> {
     }
   }
 
+  Future<void> _remind(Map<String, dynamic> inv) async {
+    try {
+      final url =
+          await ApiService.remindInvoice((inv['id'] as num).toInt());
+      if (!mounted) return;
+      await Links.open(context, url,
+          failMessage: 'WhatsApp is not installed on this phone.');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -234,7 +249,8 @@ class _ManagerBillingState extends State<ManagerBilling> {
                       final v = rows[i];
                       return _InvoiceCard(
                           inv: v,
-                          onCollect: () => _collectSheet(v));
+                          onCollect: () => _collectSheet(v),
+                          onRemind: () => _remind(v));
                     },
                   ),
                 ),
@@ -296,9 +312,11 @@ class _TotalStrip extends StatelessWidget {
 
 /// Invoice row with Collect CTA.
 class _InvoiceCard extends StatelessWidget {
-  const _InvoiceCard({required this.inv, required this.onCollect});
+  const _InvoiceCard(
+      {required this.inv, required this.onCollect, required this.onRemind});
   final Map<String, dynamic> inv;
   final VoidCallback onCollect;
+  final VoidCallback onRemind;
   @override
   Widget build(BuildContext context) {
     final bal = ApiService.numOf(inv['balance']);
@@ -319,7 +337,9 @@ class _InvoiceCard extends StatelessWidget {
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                           color: BizStayColors.slate600, fontSize: 12)),
-                  Text('Due ${inv['due_date'] ?? ''}',
+                  Text(
+                      'Due ${inv['due_date'] ?? ''}'
+                      '${inv['last_reminded'] != null ? ' • Reminded ${inv['last_reminded']}' : ''}',
                       style: const TextStyle(
                           color: BizStayColors.slate500, fontSize: 12)),
                 ])),
@@ -332,15 +352,25 @@ class _InvoiceCard extends StatelessWidget {
                 ]),
           ]),
           const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-                onPressed: bal > 0 ? onCollect : null,
-                icon: const Icon(Icons.payments_outlined, size: 18),
-                label: Text(bal > 0
-                    ? 'Collect ${Biz.money(bal, paise: true)}'
-                    : 'Settled')),
-          ),
+          Row(children: [
+            Expanded(
+              child: FilledButton.icon(
+                  onPressed: bal > 0 ? onCollect : null,
+                  icon: const Icon(Icons.payments_outlined, size: 18),
+                  label: Text(bal > 0
+                      ? 'Collect ${Biz.money(bal, paise: true)}'
+                      : 'Settled')),
+            ),
+            if (bal > 0 && '${inv['phone'] ?? ''}'.isNotEmpty) ...[
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                  onPressed: onRemind,
+                  style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF128C7E)),
+                  icon: const Icon(Icons.chat_outlined, size: 18),
+                  label: const Text('Remind')),
+            ],
+          ]),
         ]),
       ),
     );

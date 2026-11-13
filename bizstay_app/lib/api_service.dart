@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,6 +12,10 @@ class ApiService {
   static const _roleKey = 'bizstay_role';
   static const _nameKey = 'bizstay_name';
   static const _baseUrlKey = 'bizstay_base_url';
+
+  /// Called when the server ends the session (token expired, login
+  /// disabled by the owner) so the app can return to the sign-in screen.
+  static VoidCallback? onSessionEnded;
 
   static const String defaultBaseUrl = String.fromEnvironment(
     'BIZSTAY_API_URL',
@@ -84,10 +89,7 @@ class ApiService {
     } catch (_) {
       // Token may already be invalid; still clear local state.
     }
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_roleKey);
-    await prefs.remove(_nameKey);
+    await _clearSession();
   }
 
   static Future<Session?> session() async {
@@ -127,24 +129,89 @@ class ApiService {
           {String status = '', int page = 1}) =>
       getJson('/inquiries', {'status': status, 'page': '$page'});
 
+  static Future<Map<String, dynamic>> visitors({bool insideOnly = false}) =>
+      getJson('/visitors', {if (insideOnly) 'inside': '1'});
+
+  static Future<void> addVisitor({
+    required String name,
+    String? phone,
+    int? guestId,
+    String? relation,
+    String? purpose,
+    bool overnight = false,
+  }) async {
+    await postJson('/visitors', {
+      'visitor_name': name,
+      if (phone != null && phone.isNotEmpty) 'visitor_phone': phone,
+      'guest_id': ?guestId,
+      if (relation != null && relation.isNotEmpty) 'relation': relation,
+      if (purpose != null && purpose.isNotEmpty) 'purpose': purpose,
+      'is_overnight': overnight,
+    }, fallback: 'Could not log visitor.');
+  }
+
+  static Future<void> checkoutVisitor(int id) async {
+    await postJson('/visitors/$id/checkout', const {},
+        fallback: 'Could not check out visitor.');
+  }
+
+  static Future<void> addLead({
+    required String name,
+    required String phone,
+    String source = 'walk_in',
+    double? budget,
+    String? message,
+  }) async {
+    await postJson('/inquiries', {
+      'name': name,
+      'phone': phone,
+      'source': source,
+      'budget': ?budget,
+      if (message != null && message.isNotEmpty) 'message': message,
+    }, fallback: 'Could not save lead.');
+  }
+
+  /// Logs the reminder on the server and returns the wa.me link to open.
+  static Future<String> remindInvoice(int invoiceId) async {
+    final body = await postJson('/invoices/$invoiceId/remind', const {},
+        fallback: 'Could not prepare reminder.');
+    return '${body['url'] ?? ''}';
+  }
+
+  /// Razorpay payment link for an invoice balance (online payments).
+  static Future<String> payLink(int invoiceId) async {
+    final body = await postJson('/invoices/$invoiceId/pay-link', const {},
+        fallback: 'Online payment is not available right now.');
+    return '${body['url'] ?? ''}';
+  }
+
+  /// POST helper: any 2xx is success, anything else throws [ApiException]
+  /// with the server's own message.
+  static Future<Map<String, dynamic>> postJson(
+      String path, Map<String, dynamic> payload,
+      {String fallback = 'Request failed.'}) async {
+    final res = await post(path, payload);
+    final body = decode(res);
+    await _handleAuthFailure(res, body);
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw ApiException(messageOf(body, fallback));
+    }
+    return body is Map<String, dynamic> ? body : {'data': body};
+  }
+
   static Future<Map<String, dynamic>> collect(
       {required int invoiceId,
       required double amount,
       required String method,
       String? transactionId,
       String? notes}) async {
-    final res = await post('/invoices/$invoiceId/collect', {
+    return postJson('/invoices/$invoiceId/collect', {
       'amount': amount,
       'payment_method': method,
       if (transactionId != null && transactionId.isNotEmpty)
         'transaction_id': transactionId,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
-    });
-    final body = decode(res);
-    if (res.statusCode != 201) {
-      throw ApiException(messageOf(body, 'Could not record payment.'));
-    }
-    return body is Map<String, dynamic> ? body : {'data': body};
+    }, fallback: 'Could not record payment.');
   }
 
   static Future<Map<String, dynamic>> raiseComplaint(
@@ -152,33 +219,45 @@ class ApiService {
       String? description,
       String category = 'other',
       String priority = 'medium'}) async {
-    final res = await post('/complaints', {
+    return postJson('/complaints', {
       'title': title,
       if (description != null && description.isNotEmpty)
         'description': description,
       'category': category,
       'priority': priority,
-    });
-    final body = decode(res);
-    if (res.statusCode != 201) {
-      throw ApiException(messageOf(body, 'Could not raise complaint.'));
-    }
-    return body is Map<String, dynamic> ? body : {'data': body};
+    }, fallback: 'Could not raise complaint.');
   }
 
   static Future<Map<String, dynamic>> getJson(String path,
       [Map<String, String>? query]) async {
     final res = await get(path, query);
     final body = decode(res);
-    if (res.statusCode == 401) {
-      await logout();
-      throw const ApiException('Session expired. Please sign in again.');
-    }
+    await _handleAuthFailure(res, body);
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw ApiException(messageOf(body, 'Request failed.'));
     }
     if (body is Map<String, dynamic>) return body;
     return {'data': body};
+  }
+
+  /// 401 = token gone; 403 "disabled" = the owner switched this login off.
+  /// Both end the session locally and send the user back to sign-in.
+  static Future<void> _handleAuthFailure(http.Response res, dynamic body) async {
+    final disabled = res.statusCode == 403 &&
+        messageOf(body, '').toLowerCase().contains('disabled');
+    if (res.statusCode != 401 && !disabled) return;
+    await _clearSession();
+    onSessionEnded?.call();
+    throw ApiException(disabled
+        ? 'This login has been disabled. Please contact the PG office.'
+        : 'Session expired. Please sign in again.');
+  }
+
+  static Future<void> _clearSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tokenKey);
+    await prefs.remove(_roleKey);
+    await prefs.remove(_nameKey);
   }
 
   static dynamic decode(http.Response res) {
@@ -235,6 +314,19 @@ class Session {
   const Session({required this.role, required this.name});
 
   bool get isTenant => role == 'tenant';
+
+  bool get isStaff => !isTenant;
+
+  /// Owner and manager see money beyond one bill (P&L, expenses).
+  bool get canManageFinance => role == 'admin' || role == 'manager';
+
+  String get roleLabel => switch (role) {
+        'admin' => 'Owner',
+        'manager' => 'Manager',
+        'staff' => 'Warden',
+        'tenant' => 'Resident',
+        _ => 'Staff',
+      };
 }
 
 class ApiException implements Exception {

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter/services.dart';
+
 import '../api_service.dart';
+import '../links.dart';
+import '../theme/bizstay_colors.dart';
 import '../widgets/biz.dart';
 import 'manager_today.dart';
 
@@ -115,15 +119,36 @@ class _TenantStayTabState extends State<TenantStayTab> {
               Biz.statCard('Outstanding',
                   Biz.money(d['outstanding'] ?? 0, paise: true),
                   icon: Icons.warning_amber_rounded, tint: Colors.red),
-              if (due.isNotEmpty)
-                Biz.statCard(
-                    'Next bill — ${due['invoice_number'] ?? ''}',
-                    '${Biz.money(due['balance'] ?? due['total_due'] ?? 0, paise: true)} due ${due['due_date'] ?? ''}',
-                    icon: Icons.receipt_long),
-              if ('${prop['upi_id'] ?? ''}'.isNotEmpty)
+              if (due.isNotEmpty &&
+                  ApiService.numOf(due['balance']) > 0)
+                PayCard(
+                  invoiceId: (due['id'] as num?)?.toInt(),
+                  invoiceNumber: '${due['invoice_number'] ?? ''}',
+                  amount: ApiService.numOf(due['balance']),
+                  dueDate: '${due['due_date'] ?? ''}',
+                  upiUri: due['upi_uri'] as String?,
+                  payLink: due['pay_link'] as String?,
+                  onlinePayments: d['online_payments'] == true,
+                  upiId: '${prop['upi_id'] ?? ''}',
+                )
+              else if ('${prop['upi_id'] ?? ''}'.isNotEmpty)
                 UpiCard(
                     upiId: '${prop['upi_id']}',
                     name: '${prop['name'] ?? ''}'),
+              if ('${prop['whatsapp'] ?? ''}'.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: OutlinedButton.icon(
+                    onPressed: () => Links.open(
+                        context,
+                        Links.whatsapp('${prop['whatsapp']}',
+                            'Hi, this is ${guest['full_name'] ?? widget.name} (Bed ${d['bed'] ?? ''}).'),
+                        failMessage: 'WhatsApp is not installed.'),
+                    icon: const Icon(Icons.chat_outlined,
+                        color: Color(0xFF25D366)),
+                    label: const Text('Message the PG office on WhatsApp'),
+                  ),
+                ),
               if ('${prop['check_in_time'] ?? ''}'.isNotEmpty)
                 Text(
                     'Check-in ${prop['check_in_time']} • Check-out ${prop['check_out_time'] ?? ''}',
@@ -196,9 +221,16 @@ class _TenantBillsTabState extends State<TenantBillsTab> {
               itemCount: rows.length,
               itemBuilder: (context, i) {
                 final v = rows[i];
+                final balance = ApiService.numOf(v['balance']);
+                final upi = '${v['upi_uri'] ?? ''}';
+                final link = '${v['pay_link'] ?? ''}';
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
+                    onTap: balance > 0 && (upi.isNotEmpty || link.isNotEmpty)
+                        ? () => Links.open(context, link.isNotEmpty ? link : upi,
+                            failMessage: 'No UPI app found on this phone.')
+                        : null,
                     title: Text(
                         '${v['invoice_number'] ?? ''} • ${v['cycle'] ?? ''}'),
                     subtitle: Text(
@@ -211,6 +243,12 @@ class _TenantBillsTabState extends State<TenantBillsTab> {
                               style:
                                   const TextStyle(fontWeight: FontWeight.w800)),
                           Biz.chip('${v['status'] ?? ''}'),
+                          if (balance > 0 && (upi.isNotEmpty || link.isNotEmpty))
+                            const Text('Tap to pay',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: BizStayColors.info)),
                         ]),
                   ),
                 );
@@ -321,6 +359,137 @@ class _TenantHelpTabState extends State<TenantHelpTab> {
                 )),
           ]);
         },
+      ),
+    );
+  }
+}
+
+/// Pay the current bill: Razorpay link when online payments are on,
+/// otherwise any UPI app opened with payee + amount pre-filled.
+class PayCard extends StatefulWidget {
+  const PayCard({
+    super.key,
+    required this.invoiceId,
+    required this.invoiceNumber,
+    required this.amount,
+    required this.dueDate,
+    required this.upiUri,
+    required this.payLink,
+    required this.onlinePayments,
+    required this.upiId,
+  });
+
+  final int? invoiceId;
+  final String invoiceNumber;
+  final double amount;
+  final String dueDate;
+  final String? upiUri;
+  final String? payLink;
+  final bool onlinePayments;
+  final String upiId;
+
+  @override
+  State<PayCard> createState() => _PayCardState();
+}
+
+class _PayCardState extends State<PayCard> {
+  bool _busy = false;
+
+  Future<void> _payOnline() async {
+    setState(() => _busy = true);
+    try {
+      var url = widget.payLink ?? '';
+      if (url.isEmpty && widget.invoiceId != null) {
+        url = await ApiService.payLink(widget.invoiceId!);
+      }
+      if (!mounted) return;
+      await Links.open(context, url,
+          failMessage: 'Could not open the payment page.');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _payUpi() async {
+    final opened = await Links.open(context, widget.upiUri ?? '',
+        failMessage: 'No UPI app found. Copy the UPI ID and pay manually.');
+    if (opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          duration: Duration(seconds: 6),
+          content: Text(
+              'After paying, share the UTR / screenshot with the office so it is marked paid.')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasUpi = (widget.upiUri ?? '').isNotEmpty;
+    return Card(
+      color: BizStayColors.navy900,
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Rent due • ${widget.invoiceNumber}',
+              style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          const SizedBox(height: 4),
+          Text(Biz.money(widget.amount, paise: true),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900)),
+          Text('Due ${widget.dueDate}',
+              style: const TextStyle(color: Colors.white70)),
+          const SizedBox(height: 12),
+          if (widget.onlinePayments)
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                    backgroundColor: BizStayColors.gold500,
+                    foregroundColor: BizStayColors.navy900),
+                onPressed: _busy ? null : _payOnline,
+                icon: const Icon(Icons.lock_outline),
+                label: Text(_busy ? 'Opening…' : 'Pay online (UPI / card)'),
+              ),
+            ),
+          if (hasUpi) ...[
+            if (widget.onlinePayments) const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: widget.onlinePayments
+                  ? OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white38)),
+                      onPressed: _payUpi,
+                      icon: const Icon(Icons.qr_code_2),
+                      label: const Text('Pay with UPI app'))
+                  : FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                          backgroundColor: BizStayColors.gold500,
+                          foregroundColor: BizStayColors.navy900),
+                      onPressed: _payUpi,
+                      icon: const Icon(Icons.qr_code_2),
+                      label: const Text('Pay with GPay / PhonePe / Paytm')),
+            ),
+          ],
+          if (widget.upiId.isNotEmpty)
+            TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: Colors.white70),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: widget.upiId));
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('UPI ID copied')));
+              },
+              icon: const Icon(Icons.copy, size: 16),
+              label: Text('UPI ID: ${widget.upiId}'),
+            ),
+        ]),
       ),
     );
   }

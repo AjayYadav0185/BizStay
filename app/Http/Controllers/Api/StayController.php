@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\InvoiceStatus;
 use App\Models\Booking;
 use App\Models\Guest;
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Services\InvoiceService;
+use App\Models\Room;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,7 +14,7 @@ final class StayController
 {
     public function rooms(): JsonResponse
     {
-        $rooms = \App\Models\Room::query()
+        $rooms = Room::query()
             ->with(['beds.currentBooking.guest'])
             ->orderBy('room_number')
             ->paginate(50);
@@ -56,6 +53,7 @@ final class StayController
             'phone' => $g->phone,
             'kyc_status' => $g->kyc_status->value,
             'aadhaar' => $g->masked_aadhaar,
+            'police_verification' => $g->police_verification_status?->value,
             'bed' => $g->currentBooking?->bed?->bed_code,
             'room' => $g->currentBooking?->bed?->room?->room_number,
             'outstanding' => $g->outstandingBalance(),

@@ -22,6 +22,10 @@ class BizStayAppState extends State<BizStayApp> {
   @override
   void initState() {
     super.initState();
+    // Expired token or a login disabled by the owner: back to sign-in.
+    ApiService.onSessionEnded = () {
+      if (mounted && _session != null) _signOut();
+    };
     ApiService.session().then((s) {
       if (mounted) {
         setState(() {

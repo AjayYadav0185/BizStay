@@ -218,7 +218,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid #f4
 <details class="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4"><summary class="font-extrabold text-[#102a43] cursor-pointer py-1">Do I need MySQL to start?</summary><p class="mt-2 text-sm text-slate-600">No. BizStay runs on SQLite with zero config. Switch to MySQL on MAMP later by setting DB_CONNECTION=mysql in .env and running migrate --seed.</p></details>
 <details class="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4"><summary class="font-extrabold text-[#102a43] cursor-pointer py-1">What is the demo login?</summary><p class="mt-2 text-sm text-slate-600 break-words">Open /admin and sign in with admin@mail.com / password. Demo data includes 3 properties, 10 rooms, 24 beds, 8 tenants, payments, inquiries, expenses and complaints.</p></details>
 <details class="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4"><summary class="font-extrabold text-[#102a43] cursor-pointer py-1">How does Convert-to-Tenant work?</summary><p class="mt-2 text-sm text-slate-600">From any inquiry, one click allocates a vacant bed, creates the tenant profile with KYC, rent and deposit, and flips bed status to occupied.</p></details>
-<details class="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4"><summary class="font-extrabold text-[#102a43] cursor-pointer py-1">Where is the Android APK?</summary><p class="mt-2 text-sm text-slate-600 break-words">Scroll to the download section below. Place your built APK at public/downloads/bizstay.apk on the server, then the button serves it directly.</p></details>
+<details class="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4"><summary class="font-extrabold text-[#102a43] cursor-pointer py-1">Where is the Android APK?</summary><p class="mt-2 text-sm text-slate-600 break-words">Use the Download APK button in the download section below, or scan its QR code with your phone camera. One app for everyone: owners and wardens sign in with their email, residents with their mobile number.</p></details>
 </div>
 </div>
 </section>
@@ -239,11 +239,33 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid #f4
 <div class="bg-white text-slate-800 rounded-3xl p-5 sm:p-8 shadow-2xl min-w-0">
 <div class="flex items-center gap-4 min-w-0">
 <img src="{{ asset('images/bizstay-logo.png') }}" alt="BizStay app icon" class="w-14 h-14 rounded-2xl shadow object-cover shrink-0" width="56" height="56">
-<div class="min-w-0"><h3 class="font-extrabold text-lg text-[#102a43]">BizStay.apk</h3><p class="text-xs text-slate-500 font-semibold">For managers, wardens and staff • Free with plan</p></div>
+<div class="min-w-0"><h3 class="font-extrabold text-lg text-[#102a43]">BizStay.apk</h3><p class="text-xs text-slate-500 font-semibold">For owners, wardens and residents • Free with plan</p></div>
 </div>
 @if (file_exists(public_path('downloads/bizstay.apk')))
-<a href="{{ asset('downloads/bizstay.apk') }}" download class="mt-6 flex items-center justify-center gap-2 w-full bg-[#102a43] hover:bg-[#243b53] text-white font-extrabold rounded-2xl py-4 min-h-[52px] transition">Download APK — {{ number_format(filesize(public_path('downloads/bizstay.apk')) / 1048576, 1) }} MB</a>
-<p class="mt-2 text-center text-xs text-slate-400">By downloading you agree to allow Install from Unknown Sources for BizStay.</p>
+@php
+    $apkPath = public_path('downloads/bizstay.apk');
+    $apkUrl = asset('downloads/bizstay.apk').'?v='.filemtime($apkPath);
+@endphp
+<a href="{{ $apkUrl }}" download="BizStay.apk" type="application/vnd.android.package-archive" class="mt-6 flex items-center justify-center gap-2 w-full bg-[#102a43] hover:bg-[#243b53] text-white font-extrabold rounded-2xl py-4 min-h-[52px] transition">
+<svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-5-5m5 5l5-5M5 20h14"/></svg>
+Download APK · {{ number_format(filesize($apkPath) / 1048576, 1) }} MB</a>
+<p class="mt-2 text-center text-xs text-slate-400">Updated {{ \Illuminate\Support\Carbon::createFromTimestamp(filemtime($apkPath), 'Asia/Kolkata')->format('d M Y') }} · Android 7.0 or newer</p>
+<div class="mt-5 hidden sm:flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+<div id="apk-qr" data-url="{{ $apkUrl }}" class="w-28 h-28 shrink-0 bg-white rounded-xl p-1.5" role="img" aria-label="QR code to download the BizStay APK"></div>
+<div class="min-w-0"><p class="font-extrabold text-[#102a43]">On a laptop?</p><p class="mt-1 text-xs text-slate-500">Scan this with your phone camera to download the app straight to your phone.</p><button type="button" id="apk-copy" class="mt-3 text-xs font-bold text-[#e11d48] hover:underline">Copy download link</button></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+(function () {
+  var box = document.getElementById('apk-qr');
+  if (box && window.QRCode) { new QRCode(box, { text: box.dataset.url, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M }); }
+  var copy = document.getElementById('apk-copy');
+  if (copy && box) copy.addEventListener('click', function () {
+    navigator.clipboard && navigator.clipboard.writeText(box.dataset.url).then(function () { copy.textContent = 'Link copied ✓'; });
+  });
+})();
+</script>
+<style>#apk-qr img,#apk-qr canvas{width:100%!important;height:100%!important}</style>
 @else
 <div class="mt-6 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-5 text-center">
 <p class="font-extrabold text-[#102a43]">APK uploading soon</p>
@@ -251,8 +273,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid #f4
 <a href="/admin" class="mt-4 inline-block bg-[#f43f5e] text-white font-extrabold rounded-xl px-6 py-3 min-h-[48px]">Open web demo instead</a>
 </div>
 @endif
-<div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-500 font-semibold"><span>✓ Virus scanned</span><span>•</span><span>✓ Auto-updates</span><span>•</span><span>✓ Same login as web</span></div>
-<ol class="mt-4 space-y-1.5 text-xs text-slate-500"><li><strong class="text-slate-700">1.</strong> Tap Download APK on your Android phone.</li><li><strong class="text-slate-700">2.</strong> Allow "Install unknown apps" for Chrome when asked.</li><li><strong class="text-slate-700">3.</strong> Open BizStay and sign in (manager / warden login).</li></ol>
+<div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-500 font-semibold"><span>✓ Same login as web</span><span>•</span><span>✓ Residents pay rent by UPI</span><span>•</span><span>✓ Visitor log for wardens</span></div>
+<ol class="mt-4 space-y-1.5 text-xs text-slate-500"><li><strong class="text-slate-700">1.</strong> Tap Download APK on your Android phone.</li><li><strong class="text-slate-700">2.</strong> Allow "Install unknown apps" for Chrome when asked.</li><li><strong class="text-slate-700">3.</strong> Open BizStay and sign in: staff with email, residents with their mobile number. Ask your PG office if the app asks for a server address.</li><li><strong class="text-slate-700">4.</strong> For a new version, download again and install over the old one — your login stays.</li></ol>
 </div>
 </div>
 </section>
