@@ -31,6 +31,3 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
-
-# Built Android app (56 MB) — upload to the server, do not commit
-public/downloads/*.apk
